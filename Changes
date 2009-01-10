@@ -1,0 +1,32 @@
+Revision history for Sys-Mmap-Simple
+
+0.04    2009-01-09
+        Fixed windows support
+
+0.03_5  2009-01-08
+        Fixed race conditions
+        Increased portability
+
+0.03_4  2009-01-07
+        Fixed testing
+
+0.03_3	2009-01-07
+        Added remap on Linux
+        Added Windows support
+
+0.03_2  2009-01-06
+        Improved portability
+        Addition of condition variable functionality
+        Documentation updates
+
+0.03_1  2008-12-21
+        Improved portability
+
+0.02    2008-12-20
+        Added locked
+        Improved diagnostics.
+        Fixed documentation.
+
+0.01    2008-12-19
+        First version, released on an unsuspecting world.
+

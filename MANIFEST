@@ -1,0 +1,13 @@
+Build.PL
+Changes
+lib/Sys/Mmap/Simple.pm
+lib/Sys/Mmap/Simple.xs
+MANIFEST			This list of files
+META.yml
+README
+t/00-load.t
+t/10-basics.t
+t/20-threads.t
+t/pod-coverage.t
+t/pod.t
+Makefile.PL

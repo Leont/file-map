@@ -1,0 +1,13 @@
+^_build
+^Build$
+^blib
+~$
+\.bak$
+^MANIFEST\.SKIP$
+CVS
+ppport.h
+.*\.swp
+.*\.tdy
+.*\.tar\.gz
+\.lwpcookies
+Sys-Mmap-Simple-*
