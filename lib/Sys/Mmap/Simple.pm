@@ -8,7 +8,7 @@ use base qw/Exporter DynaLoader/;
 use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 
-our $VERSION = '0.04';
+our $VERSION = '0.06';
 
 our (@EXPORT_OK, %EXPORT_TAGS);
 
@@ -75,25 +75,51 @@ Version 0.03
 
 =head1 DESCRIPTION
 
-This module maps files to Perl variables. There are a few differences between this module and L<Sys::Mmap>.
+Sys::Mmap::Simple maps files or anonymous memory into perl variables.
+
+=head2 Advantages of memory mapping
 
 =over 4
 
-=item * It offers a more simple interface targeted at common usage patterns: it always maps the whole file, and always does shared mapping. This seems to be what people want in almost all cases.
+=item Unlike normal perl variables, mapped memory is shared between threads or forked processes.
 
-=item * It is portable, supporting not only unix but also windows.
+=item It is an efficient way to slurp an entire file. Unlike for example L<File::Slurp>, this module returns almost immediately, loading the pages lazily on access. This means you only 'pay' for the parts of the file you actually use.
 
-=item * This module is safe yet fast. Sys::Mmap offers two interfaces, one is fast, but can cause segfaults or loose the mapping if not used correctly. The other is safe, but reportedly 10 times slower. Sys::Mmap::Simple is fast (as long as it is used properly) and safe.
-
-=item * It will automatically unmap the file when the scalar gets destroyed.
-
-=item * It has built-in support for thread synchronization. 
+=item Perl normally never returns memory to the system while running, mapped memory can be returned.
 
 =back
 
+=head2 Advantages of this module over other similar modules
+
+=head3 Safety and Speed
+
+This module is safe yet fast. Alternatives are either fast but can cause segfaults or loose the mapping when not used correctly, or are safe but rather slow (due to ties). Sys::Mmap::Simple is as fast as a normal string yet safe.
+
+=head3 Simplicity
+
+It offers a more simple interface targeted at common usage patterns
+
+=over 4
+
+=item Files are mapped into a variable that can be read just like any other variable, and it can be written to using standard Perl techniques such as regexps and C<substr>.
+
+=item Files can be mapped using a set of simple functions. No weird constants or 6 argument functions.
+
+=item It will automatically unmap the file when the scalar gets destroyed. This works correctly even in multithreaded programs.
+
+=back
+
+=head3 Portability
+
+Sys::Mmap::Simple supports both Unix and Windows.
+
+=head3 Thread synchronization
+
+It has built-in support for thread synchronization. 
+
 =head1 FUNCTIONS
 
-=head2 MAPPING
+=head2 Mapping
 
 The following functions for mapping a variable are available for exportation. They all take an lvalue as their first argument.
 
@@ -121,7 +147,7 @@ Try to remap $variable to a new size. It may fail if there is not sufficient spa
 
 Unmap a variable. Note that normally this is not necessary, but it is included for completeness.
 
-=head2 LOCKING
+=head2 Locking
 
 These locking functions provide thread based locking for the mapped region. The mapped region has an internal lock and condition variable. The condional functions can only be used in a locked block. If your perl has been compiled without thread support the condition functions will not be availible, and C<locked> will execute its block without locking.
 
@@ -158,6 +184,16 @@ This is an early release. Bugs are likely. Bug reports are welcome.
 Please report any bugs or feature requests to C<bug-sys-mmap-simple at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Sys-Mmap-Simple>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Sys::Mmap>, the original Perl mmap module.
+
+=item L<IPC::Mmap>, Another mmap module.
+
+=back
 
 =head1 AUTHOR
 
@@ -196,4 +232,4 @@ L<http://search.cpan.org/dist/Sys-Mmap-Simple>
 Copyright 2008 Leon Timmermans, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+under the same terms as perl itself.

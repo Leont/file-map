@@ -3,8 +3,8 @@
 use strict;
 use warnings;
 use Config;
-use Test::More $Config{useithreads} ? ( tests => 5 ) : ( skip_all => "No threading support enabled" );
-use threads 1.34;
+use Test::More $Config{useithreads} ? ( tests => 4 ) : ( skip_all => "No threading support enabled" );
+use threads;
 use Sys::Mmap::Simple qw/map_anonymous sync locked :CONDITION/;
 
 map_anonymous my $variable, 1024;
@@ -20,7 +20,6 @@ my $thread = async {
 alarm 5;
 
 sleep 1;
-ok($thread->is_running, "Thread is running");
 locked { condition_signal } $variable;
 $thread->join;
 

@@ -13,7 +13,7 @@ my $builder = Module::Build->new(
 		'Module::Build'=> 0,
 		'Test::More'   => 0,
 		'IO::Handle'   => 0,
-		threads        => 1.34,
+		threads        => 0,
 		'ExtUtils::CBuilder' => 0,
 	},
 	add_to_cleanup     => ['Sys-Mmap-Simple-*'],
