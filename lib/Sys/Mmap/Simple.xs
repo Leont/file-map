@@ -20,6 +20,10 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#ifndef SvPV_free
+#define SvPV_free(arg) sv_setpvn_mg(arg, NULL, 0);
+#endif
+
 #define MMAP_MAGIC_NUMBER 0x4c54
 
 struct mmap_info {
@@ -130,16 +134,14 @@ static int mmap_dup(pTHX_ MAGIC* magic, CLONE_PARAMS* param) {
 static const MGVTBL mmap_read_table  = { 0, 0,          mmap_length, mmap_clear, mmap_free TABLE_TAIL };
 static const MGVTBL mmap_write_table = { 0, mmap_write, mmap_length, mmap_clear, mmap_free TABLE_TAIL };
 
-static SV* check_new_variable(pTHX_ SV* var_ref) {
-	SV* var = SvRV(var_ref);
+static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
 		Perl_croak(aTHX_ "Trying to map into a nonscalar!\n");
 	if (SvMAGICAL(var) && mg_find(var, PERL_MAGIC_uvar))
 		sv_unmagic(var, PERL_MAGIC_uvar);
 	if (SvPOK(var)) 
 		SvPV_free(var);
-	sv_upgrade(var, SVt_PV);
-	return var;
+	sv_upgrade(var, SVt_PVMG);
 }
 
 static void* do_mapping(pTHX_ size_t length, int writable, int flags, int fd) {
@@ -187,8 +189,8 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, int writable) {
 		SvREADONLY_on(var);
 }
 
-static void mmap_impl(pTHX_ SV* var_ref, size_t length, int writable, int flags, int fd) {
-	SV* var = check_new_variable(aTHX_ var_ref);
+static void mmap_impl(pTHX_ SV* var, size_t length, int writable, int flags, int fd) {
+	check_new_variable(aTHX_ var);
 	void* address = do_mapping(aTHX_ length, writable, flags, fd);
 	struct mmap_info* magical = initialize_mmap_info(address, length);
 
@@ -207,50 +209,55 @@ static struct mmap_info* get_mmap_magic(pTHX_ SV* var) {
 	return (struct mmap_info*) magic->mg_ptr;
 }
 
+static SV* get_var(pTHX_ SV* var_ref) {
+	if (!SvROK(var_ref))
+		Perl_croak(aTHX_ "Invalid argument!");
+	return SvRV(var_ref);
+}
+
 MODULE = Sys::Mmap::Simple				PACKAGE = Sys::Mmap::Simple
 
 PROTOTYPES: DISABLED
 
 SV*
-_mmap_impl(var_ref, length, writable, fd)
-	SV* var_ref;
+_mmap_impl(var, length, writable, fd)
+	SV* var = get_var(aTHX_ ST(0));
 	size_t length;
 	int writable;
 	int fd;
 	CODE:
-		mmap_impl(aTHX_ var_ref, length, writable, 0, fd);
+		mmap_impl(aTHX_ var, length, writable, 0, fd);
 		ST(0) = &PL_sv_yes;
 
 SV*
-map_anonymous(var_ref, length)
-	SV* var_ref;
+map_anonymous(var, length)
+	SV* var = get_var(aTHX_ ST(0));
 	size_t length;
 	PROTOTYPE: \$@
 	CODE:
 		if (length == 0)
 			Perl_croak(aTHX_ "No length specified for anonymous map");
-		mmap_impl(aTHX_ var_ref, length, TRUE, MAP_ANONYMOUS, -1);
+		mmap_impl(aTHX_ var, length, TRUE, MAP_ANONYMOUS, -1);
 		ST(0) = &PL_sv_yes;
 
 SV*
-sync(var_ref)
-	SV* var_ref;
-	PROTOTYPE: \$
+sync(var, sync = &PL_sv_yes)
+	SV* var = get_var(aTHX_ ST(0));
+	SV* sync;
+	PROTOTYPE: \$@
 	CODE:
-		SV* var = SvRV(var_ref);
 		struct mmap_info* info = get_mmap_magic(aTHX_ var);
-		if (msync(info->address, info->length, MS_SYNC) == -1)
+		if (msync(info->address, info->length, SvTRUE(sync) ? MS_SYNC : MS_ASYNC ) == -1)
 			croak_sys(aTHX_ "Could not msync: %s");
 		ST(0) = &PL_sv_yes;
 
 #ifdef __linux__
 SV*
-remap(var_ref, new_size)
-	SV* var_ref;
+remap(var, new_size)
+	SV* var = get_var(aTHX_ ST(0));
 	size_t new_size;
 	PROTOTYPE: \$@
 	CODE:
-		SV* var = SvRV(var_ref);
 		struct mmap_info* info = get_mmap_magic(aTHX_ var);
 		if (mremap(info->address, info->length, new_size, 0) == MAP_FAILED)
 			croak_sys(aTHX_ "Could not mremap: %s");
@@ -259,49 +266,46 @@ remap(var_ref, new_size)
 #endif /* __linux__ */
 
 SV*
-unmap(var_ref)
-	SV* var_ref;
+unmap(var)
+	SV* var = get_var(aTHX_ ST(0));
 	PROTOTYPE: \$
 	CODE: 
-		SV* var = SvRV(var_ref);
 		get_mmap_magic(aTHX_ var);
 		sv_unmagic(var, PERL_MAGIC_uvar);
 		ST(0) = &PL_sv_yes;
 
 void
-locked(code, var_ref)
-	SV* code;
-	SV* var_ref;
+locked(block, var)
+	SV* block;
+	SV* var = get_var(aTHX_ ST(1));
 	PROTOTYPE: &\$
-	PPCODE:
-		SV* var = SvRV(var_ref);
+	INIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var);
-		
+	PPCODE:
 		SAVESPTR(DEFSV);
 		DEFSV = var;
 		PUSHMARK(SP);
 #ifdef USE_ITHREADS
 		MUTEX_LOCK(&info->data_mutex);
-		call_sv(code, GIMME_V | G_EVAL);
+		call_sv(block, GIMME_V | G_EVAL | G_NOARGS);
 		MUTEX_UNLOCK(&info->data_mutex);
-		SPAGAIN;
 		if (SvTRUE(ERRSV))
 			Perl_croak(aTHX_ NULL);
 #else
-		call_sv(code, GIMME_V);
-		SPAGAIN;
+		call_sv(block, GIMME_V | G_NOARGS);
 #endif
+		SPAGAIN;
 
 #ifdef USE_ITHREADS
 void
-condition_wait(condition)
-	SV* condition;
+condition_wait(block)
+	SV* block;
 	PROTOTYPE: &
 	PPCODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ DEFSV);
 		while (1) {
 			PUSHMARK(SP);
-			call_sv(condition, G_SCALAR);
+			call_sv(block, G_SCALAR | G_NOARGS);
 			SPAGAIN;
 			if (SvTRUE(TOPs))
 				break;

@@ -4,10 +4,10 @@
 ~$
 \.bak$
 ^MANIFEST\.SKIP$
-CVS
-ppport.h
-.*\.swp
-.*\.tdy
-.*\.tar\.gz
-\.lwpcookies
-Sys-Mmap-Simple-*
+\.swp
+\.tdy
+\.tar\.gz
+Sys-Mmap-Simple-.*
+^\.git
+^lib/.*\.c$
+^lib/.*\.o$

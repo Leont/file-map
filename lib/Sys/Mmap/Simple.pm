@@ -8,11 +8,18 @@ use base qw/Exporter DynaLoader/;
 use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 
-our $VERSION = '0.06';
+our $VERSION = '0.08';
 
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 bootstrap Sys::Mmap::Simple $VERSION;
+
+my %writable_for = (
+	'<'  => 0,
+	'+<' => 1,
+	'>'  => 1,
+	'+>' => 1,
+);
 
 my %export_data = (
 	MAP       => [qw/map_handle map_file map_anonymous remap unmap/],
@@ -28,16 +35,16 @@ while (my ($category, $values) = each %export_data) {
 }
 
 sub map_handle(\$*@) {
-	my ($var_ref, $glob, $writable) = @_;
+	my ($var_ref, $glob, $mode) = @_;
 	my $fh = qualify_to_ref($glob, caller);
-	return _mmap_wrapper($var_ref, -s $fh, defined $writable ? $writable : 0, fileno $fh);
+	return _mmap_wrapper($var_ref, -s $fh, $writable_for{$mode || '<'}, fileno $fh);
 }
 
 sub map_file(\$@) {
-	my ($var_ref, $filename, $writable) = @_;
-	my $mode = $writable ? '+<' : '<';
+	my ($var_ref, $filename, $mode) = @_;
+	$mode ||= '<';
 	open my $fh, $mode, $filename or croak "Couldn't open file $filename: $!";
-	my $ret = _mmap_wrapper($var_ref, -s $fh, defined $writable ? $writable : 0, fileno $fh);
+	my $ret = _mmap_wrapper($var_ref, -s $fh, $writable_for{$mode}, fileno $fh);
 	close $fh or croak "Couldn't close $filename: $!";
 	return $ret;
 }
@@ -62,7 +69,7 @@ Sys::Mmap::Simple - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.08
 
 =head1 SYNOPSIS
 
@@ -81,11 +88,11 @@ Sys::Mmap::Simple maps files or anonymous memory into perl variables.
 
 =over 4
 
-=item Unlike normal perl variables, mapped memory is shared between threads or forked processes.
+=item * Unlike normal perl variables, mapped memory is shared between threads or forked processes.
 
-=item It is an efficient way to slurp an entire file. Unlike for example L<File::Slurp>, this module returns almost immediately, loading the pages lazily on access. This means you only 'pay' for the parts of the file you actually use.
+=item * It is an efficient way to slurp an entire file. Unlike for example L<File::Slurp>, this module returns almost immediately, loading the pages lazily on access. This means you only 'pay' for the parts of the file you actually use.
 
-=item Perl normally never returns memory to the system while running, mapped memory can be returned.
+=item * Perl normally never returns memory to the system while running, mapped memory can be returned.
 
 =back
 
@@ -93,7 +100,7 @@ Sys::Mmap::Simple maps files or anonymous memory into perl variables.
 
 =head3 Safety and Speed
 
-This module is safe yet fast. Alternatives are either fast but can cause segfaults or loose the mapping when not used correctly, or are safe but rather slow (due to ties). Sys::Mmap::Simple is as fast as a normal string yet safe.
+This module is safe yet fast. Alternatives are either fast but can cause segfaults or loose the mapping when not used correctly, or are safe but rather slow. Sys::Mmap::Simple is as fast as a normal string yet safe.
 
 =head3 Simplicity
 
@@ -101,11 +108,11 @@ It offers a more simple interface targeted at common usage patterns
 
 =over 4
 
-=item Files are mapped into a variable that can be read just like any other variable, and it can be written to using standard Perl techniques such as regexps and C<substr>.
+=item * Files are mapped into a variable that can be read just like any other variable, and it can be written to using standard Perl techniques such as regexps and C<substr>.
 
-=item Files can be mapped using a set of simple functions. No weird constants or 6 argument functions.
+=item * Files can be mapped using a set of simple functions. No weird constants or 6 argument functions.
 
-=item It will automatically unmap the file when the scalar gets destroyed. This works correctly even in multithreaded programs.
+=item * It will automatically unmap the file when the scalar gets destroyed. This works correctly even in multithreaded programs.
 
 =back
 
@@ -123,11 +130,11 @@ It has built-in support for thread synchronization.
 
 The following functions for mapping a variable are available for exportation. They all take an lvalue as their first argument.
 
-=head3 map_handle $variable, *handle, $writable = 0
+=head3 map_handle $variable, *handle, $mode = '<'
 
-Use a filehandle to mmap into a variable. *handle may be filehandle or a reference to a filehandle.
+Use a filehandle to mmap into a variable. *handle may be a bareword, constant, scalar expression, typeglob, or a reference to a typeglob. $mode uses the same format as L<open> does.
 
-=head3 map_file $variable, $filename, $writable = 0
+=head3 map_file $variable, $filename, $mode = '<'
 
 Open a file and mmap it into a variable.
 
@@ -135,9 +142,9 @@ Open a file and mmap it into a variable.
 
 Map an anonymous piece of memory.
 
-=head3 sync $variable
+=head3 sync $variable, $synchronous = 1
 
-Flush changes made to the memory map back to disk. Mappings are always flushed when unmapped, so this is usually not necessary. If your operating system supports it, the flushing will be done synchronously.
+Flush changes made to the memory map back to disk. Mappings are always flushed when unmapped, so this is usually not necessary. If $synchronous is true and your operating system supports it, the flushing will be done synchronously.
 
 =head3 remap $variable, $new_size
 
@@ -149,7 +156,7 @@ Unmap a variable. Note that normally this is not necessary, but it is included f
 
 =head2 Locking
 
-These locking functions provide thread based locking for the mapped region. The mapped region has an internal lock and condition variable. The condional functions can only be used in a locked block. If your perl has been compiled without thread support the condition functions will not be availible, and C<locked> will execute its block without locking.
+These locking functions provide locking for threads for the mapped region. The mapped region has an internal lock and condition variable. The conditonal functions can only be used inside a locked block. If your perl has been compiled without thread support the condition functions will not be availible, and C<locked> will execute its block without locking.
 
 =head3 locked { block } $variable
 
@@ -189,9 +196,11 @@ automatically be notified of progress on your bug as I make changes.
 
 =over 4
 
-=item L<Sys::Mmap>, the original Perl mmap module.
+=item * L<Sys::Mmap>, the original Perl mmap module
 
-=item L<IPC::Mmap>, Another mmap module.
+=item * L<IPC::Mmap>, another mmap module
+
+=item * L<mmap(2)>. your mmap man page
 
 =back
 
@@ -229,7 +238,7 @@ L<http://search.cpan.org/dist/Sys-Mmap-Simple>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2008 Leon Timmermans, all rights reserved.
+Copyright 2008, 2009 Leon Timmermans, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as perl itself.

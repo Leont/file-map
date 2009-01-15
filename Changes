@@ -1,5 +1,15 @@
 Revision history for Sys-Mmap-Simple
-0.06    2009-01-
+
+0.07    2009-01-15
+        API break: Changed last argument of map_handle and map_file from boolean to mode
+        Added second argument to sync for synchronous or asynchronous flushing.
+        Fixed bug that led to linking error on some platforms on older perl versions
+        Refactored derefing
+        Improved documentation markup
+
+0.06    2009-01-12
+        Made tests work with older versions of threads.
+        Added documentation
 
 0.05    2009-01-09
         Fixed previous fix
