@@ -8,15 +8,27 @@ my $builder = Module::Build->new(
 	license            => 'perl',
 	dist_author        => 'Leon Timmermans <leont@cpan.org>',
 	dist_version_from  => 'lib/Sys/Mmap/Simple.pm',
-	build_requires => {
+	configure_requires => {
 		'Module::Build'=> 0,
-		'Test::More'   => 0,
-		'IO::Handle'   => 0,
-		threads        => 0,
-		'ExtUtils::CBuilder' => 0,
 	},
-	requires           => {
+	build_requires => {
+		'ExtUtils::CBuilder' => 0,
+		'Module::Build'=> 0,
+		'IO::Handle'   => 0,
+		'Test::Exception' => 0,
+		'Test::More'   => 0,
+		'Test::Warn'   => 0,
+		'Time::HiRes'  => 0,
+		threads        => 0,
+	},
+	requires => {
 		perl           => 5.007003,
+	},
+	meta_merge => {
+		resources      => {
+			bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=Sys-Mmap-Simple',
+		},
+		keywords       => [ 'mmap', 'memory mapping' ],
 	},
 	add_to_cleanup     => ['Sys-Mmap-Simple-*'],
 	create_makefile_pl => 'passthrough',

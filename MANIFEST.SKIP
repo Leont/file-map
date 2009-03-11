@@ -11,3 +11,4 @@ Sys-Mmap-Simple-.*
 ^\.git
 ^lib/.*\.c$
 ^lib/.*\.o$
+^.ignore

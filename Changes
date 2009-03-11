@@ -1,5 +1,27 @@
 Revision history for Sys-Mmap-Simple
 
+0.13    2009-02-14
+        API break: renamed conditional functions, lowercased export tags
+
+0.12    2009-02-06
+        Documentation updates
+
+0.11    2009-02-04
+        Fixed 2 Bohr bugs in unit tests
+
+0.10    2009-01-30
+        Added sys_map, for advanced functionality.
+        Fixed regression on Windows
+
+0.09    2009-01-28
+        Added offset support
+        Fixed memory leak when throwing an exception on Windows
+        Added unit tests for failures
+
+0.08    2009-01-21
+        Hopefully fixed false negatives in t/20-threads
+        Added license information to all source files
+
 0.07    2009-01-15
         API break: Changed last argument of map_handle and map_file from boolean to mode
         Added second argument to sync for synchronous or asynchronous flushing.

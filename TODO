@@ -1,0 +1,5 @@
+* I should write a wrapper around shm_open (POSIX shared memory)
+
+* I would also like to be able to support named file maps.
+
+I wish I could unify these under one interface, but that isn't likely to work out.

@@ -1,12 +1,43 @@
 Sys::Mmap::Simple
 
-This module maps files to Perl variables. There are a few differences between this module and Sys::Mmap.
+Sys::Mmap::Simple is a module that maps files or anonymous memory into perl variables.
 
-* It offers a more simple interface. It always maps the whole file, and always does shared mapping. This seems to be what people want in 95% of all cases.
-* It is portable, supporting not only unix but also windows.
-* This module is safe yet fast. Sys::Mmap offers two interfaces, one is fast, but can segfault if not used correctly. The other is safe, but reportedly 10 times slower. Sys::Mmap::Simple is fast (as long as it is used properly) and safe.
-* It will automatically unmap the file when the scalar gets destroyed.
-* It has built-in support for thread synchronization.
+Advantages of memory mapping
+  *   Unlike normal perl variables, mapped memory is shared between
+      threads or forked processes.
+
+  *   It is an efficient way to slurp an entire file. Unlike for example
+      File::Slurp, this module returns almost immediately, loading the
+      pages lazily on access. This means you only 'pay' for the parts of
+      the file you actually use.
+
+  *   Perl normally never returns memory to the system while running,
+      mapped memory can be returned.
+
+Advantages of this module over other similar modules
+ Safety and Speed
+  This module is safe yet fast. Alternatives are either fast but can cause
+  segfaults or loose the mapping when not used correctly, or are safe but
+  rather slow. Sys::Mmap::Simple is as fast as a normal string yet safe.
+
+ Simplicity
+  It offers a more simple interface targeted at common usage patterns
+
+  *   Files are mapped into a variable that can be read just like any
+      other variable, and it can be written to using standard Perl
+      techniques such as regexps and "substr".
+
+  *   Files can be mapped using a set of simple functions. No weird
+      constants or 6 argument functions.
+
+  *   It will automatically unmap the file when the scalar gets destroyed.
+      This works correctly even in multithreaded programs.
+
+ Portability
+  Sys::Mmap::Simple supports both Unix and Windows.
+
+ Thread synchronization
+  It has built-in support for thread synchronization.
 
 This is an early release. There are likely to be bugs. Also I can't guarantee API stability yet.
 

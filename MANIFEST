@@ -1,13 +1,17 @@
-Build.PL
-Changes
-lib/Sys/Mmap/Simple.pm
-lib/Sys/Mmap/Simple.xs
-Makefile.PL
+Build.PL			Module::Build - Builds and installs Perl modules
+Changes				A list of changes of different versions of this distribution
+LICENSE				Information about licensing
+lib/Sys/Mmap/Simple.pm		The Perl part of this library
+lib/Sys/Mmap/Simple.xs		The C/XS part of this library
+Makefile.PL			A passthrough builder for Module::Build
 MANIFEST			This list of files
-META.yml
-README
-t/00-load.t
-t/10-basics.t
-t/20-threads.t
-t/pod-coverage.t
-t/pod.t
+META.yml			A computer readable description of this distribution
+README				A file explaning what this module does, and how to build it
+t/00-load.t			A test checking if the module loads at all
+t/10-basics.t			Unit tests for the main mapping functionality
+t/20-errors.t			Unit tests for erroneous situations
+t/20-threads.t			Unit tests for the thread synchronization functions
+t/pod-coverage.t		A test checking documentation coverage
+t/pod.t				A test doing pod validation
+TODO				A list of things that can/should be done in the future
+typemap				A typemap for off_t

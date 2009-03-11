@@ -2,9 +2,10 @@
 
 use strict;
 use warnings;
-use Sys::Mmap::Simple qw/map_handle map_file map_anonymous sync locked unmap/;
+use Sys::Mmap::Simple qw/:map locked sync/;
 use IO::Handle;
-use Test::More tests => 20;
+use Test::More tests => 19;
+use Test::Warn;
 
 open my $self, '<', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };
@@ -34,7 +35,7 @@ $copy->autoflush(1);
 print $copy $slurped;
 
 {
-ok(map_handle(my $mmaped, $copy, '>'), "map succeeded");
+ok(map_handle(my $mmaped, $copy, '+<'), "map succeeded");
 ok(defined $mmaped,                  "mmaped is defined");
 ok( length $mmaped > 300,            "length of mmaped is big enough");
 is($mmaped, $slurped,                "slurped is mmaped");
@@ -49,16 +50,9 @@ locked { tr/r/t/ }  $mmaped;
 $slurped =~ tr/r/t/;
 
 is($mmaped, $slurped, "Translated");
-
-{
-my $warned = 0;
-local $SIG{__WARN__} = sub { $warned = 1 if $_[0] =~ /^Writing directly to a to a memory mapped file is not recommended at / };
-$mmaped = reverse $mmaped;
-
-ok($warned, 'reversing should give a warning');
 }
 
-is($mmaped, scalar reverse($slurped), "mmap is reversed");
+{
+ok(map_anonymous(my $mmap, 4096), "mapped an anonymous piece of memory");
 
-$mmaped = $mmaped;
 }
