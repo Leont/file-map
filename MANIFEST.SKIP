@@ -7,7 +7,7 @@
 \.swp
 \.tdy
 \.tar\.gz
-Sys-Mmap-Simple-.*
+File-Map-.*
 ^\.git
 ^lib/.*\.c$
 ^lib/.*\.o$

@@ -4,10 +4,10 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-	module_name        => 'Sys::Mmap::Simple',
+	module_name        => 'File::Map',
 	license            => 'perl',
 	dist_author        => 'Leon Timmermans <leont@cpan.org>',
-	dist_version_from  => 'lib/Sys/Mmap/Simple.pm',
+	dist_version_from  => 'lib/File/Map.pm',
 	configure_requires => {
 		'Module::Build'=> 0,
 	},
@@ -26,11 +26,11 @@ my $builder = Module::Build->new(
 	},
 	meta_merge => {
 		resources      => {
-			bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=Sys-Mmap-Simple',
+			bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map',
 		},
 		keywords       => [ 'mmap', 'memory mapping' ],
 	},
-	add_to_cleanup     => ['Sys-Mmap-Simple-*'],
+	add_to_cleanup     => ['File-Map-*'],
 	create_makefile_pl => 'passthrough',
 	sign               => 1,
 );

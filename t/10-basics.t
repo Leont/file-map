@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Sys::Mmap::Simple qw/:map locked sync/;
+use File::Map qw/:map locked sync/;
 use IO::Handle;
 use Test::More tests => 19;
 use Test::Warn;

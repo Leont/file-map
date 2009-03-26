@@ -1,6 +1,6 @@
-Sys::Mmap::Simple
+File::Map
 
-Sys::Mmap::Simple is a module that maps files or anonymous memory into perl variables.
+File::Map is a module that maps files or anonymous memory into perl variables.
 
 Advantages of memory mapping
   *   Unlike normal perl variables, mapped memory is shared between
@@ -18,7 +18,7 @@ Advantages of this module over other similar modules
  Safety and Speed
   This module is safe yet fast. Alternatives are either fast but can cause
   segfaults or loose the mapping when not used correctly, or are safe but
-  rather slow. Sys::Mmap::Simple is as fast as a normal string yet safe.
+  rather slow. File::Map is as fast as a normal string yet safe.
 
  Simplicity
   It offers a more simple interface targeted at common usage patterns
@@ -34,7 +34,7 @@ Advantages of this module over other similar modules
       This works correctly even in multithreaded programs.
 
  Portability
-  Sys::Mmap::Simple supports both Unix and Windows.
+  File::Map supports both Unix and Windows.
 
  Thread synchronization
   It has built-in support for thread synchronization.
@@ -55,21 +55,21 @@ SUPPORT AND DOCUMENTATION
 After installing, you can find documentation for this module with the
 perldoc command.
 
-    perldoc Sys::Mmap::Simple
+    perldoc File::Map
 
 You can also look for information at:
 
     RT, CPAN's request tracker
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Sys-Mmap-Simple
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map
 
     AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Sys-Mmap-Simple
+        http://annocpan.org/dist/File-Map
 
     CPAN Ratings
-        http://cpanratings.perl.org/d/Sys-Mmap-Simple
+        http://cpanratings.perl.org/d/File-Map
 
     Search CPAN
-        http://search.cpan.org/dist/Sys-Mmap-Simple
+        http://search.cpan.org/dist/File-Map
 
 
 COPYRIGHT AND LICENCE

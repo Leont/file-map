@@ -1,4 +1,4 @@
-package Sys::Mmap::Simple;
+package File::Map;
 
 # This software is copyright (c) 2008, 2009 by Leon Timmermans <leont@cpan.org>.
 #
@@ -17,7 +17,7 @@ our $VERSION = '0.13';
 
 our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
 
-bootstrap Sys::Mmap::Simple $VERSION;
+bootstrap File::Map $VERSION;
 
 while (my ($name, $value) = each %MAP_CONSTANTS) {
 	no strict 'refs';
@@ -29,7 +29,7 @@ while (my ($name, $value) = each %MAP_CONSTANTS) {
 my %export_data = (
 	'map'  => [qw/map_handle map_file map_anonymous unmap sys_map/],
 	extra  => [qw/remap sync pin unpin advise page_size/],
-	'lock' => [qw/locked wait_until notify broadcast/],
+	'lock' => [qw/locked wait_until notify broadcast lock_map/],
 );
 
 while (my ($category, $functions) = each %export_data) {
@@ -91,7 +91,7 @@ __END__
 
 =head1 NAME
 
-Sys::Mmap::Simple - Memory mapping made simple and safe.
+File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
@@ -99,7 +99,7 @@ Version 0.13
 
 =head1 SYNOPSIS
 
- use Sys::Mmap::Simple ':MAP';
+ use File::Map ':MAP';
  
  map_file my $mmap, $filename;
  if ($mmap ne "foobar") {
@@ -108,7 +108,7 @@ Version 0.13
 
 =head1 DESCRIPTION
 
-Sys::Mmap::Simple maps files or anonymous memory into perl variables.
+File::Map maps files or anonymous memory into perl variables.
 
 =head2 Advantages of memory mapping
 
@@ -128,7 +128,7 @@ Sys::Mmap::Simple maps files or anonymous memory into perl variables.
 
 =item * Safety and Speed
 
-This module is safe yet fast. Alternatives are either fast but can cause segfaults or loose the mapping when not used correctly, or are safe but rather slow. Sys::Mmap::Simple is as fast as a normal string yet safe.
+This module is safe yet fast. Alternatives are either fast but can cause segfaults or loose the mapping when not used correctly, or are safe but rather slow. File::Map is as fast as a normal string yet safe.
 
 =item * Simplicity
 
@@ -146,7 +146,7 @@ It offers a simple interface targeted at common usage patterns
 
 =item * Portability
 
-Sys::Mmap::Simple supports both POSIX systems and Windows.
+File::Map supports both POSIX systems and Windows.
 
 =item * Thread synchronization
 
@@ -238,6 +238,8 @@ These locking functions provide locking for threads for the mapped region. The m
 
 Perform an action while keeping a thread lock on the map. The map is accessible as C<$_>. It will return whatever its block returns.
 
+=item * lock_map $value
+
 =item * wait_until { block }
 
 Wait for block to become true. After every failed try, wait for a signal. It returns the value returned by the block.
@@ -305,7 +307,7 @@ You probably don't want to use C<E<gt>> as a mode. This does not give you readin
 As any piece of software, bugs are likely to exist here. Bug reports are welcome.
 
 Please report any bugs or feature requests to C<bug-sys-mmap-simple at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Sys-Mmap-Simple>.  I will be notified, and then you'll
+the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=File-Map>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
 =head1 SEE ALSO
@@ -330,7 +332,7 @@ Leon Timmermans, C<< <leont at cpan.org> >>
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Sys::Mmap::Simple
+    perldoc File::Map
 
 You can also look for information at:
 
@@ -338,19 +340,19 @@ You can also look for information at:
 
 =item * RT: CPAN's request tracker
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Sys-Mmap-Simple>
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map>
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
-L<http://annocpan.org/dist/Sys-Mmap-Simple>
+L<http://annocpan.org/dist/File-Map>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/d/Sys-Mmap-Simple>
+L<http://cpanratings.perl.org/d/File-Map>
 
 =item * Search CPAN
 
-L<http://search.cpan.org/dist/Sys-Mmap-Simple>
+L<http://search.cpan.org/dist/File-Map>
 
 =back
 

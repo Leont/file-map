@@ -205,8 +205,8 @@ static int mmap_dup(pTHX_ MAGIC* magic, CLONE_PARAMS* param) {
 #define mmap_dup 0
 #endif
 
-static const MGVTBL mmap_read_table  = { 0, 0,          mmap_length, mmap_free, mmap_free, 0, mmap_dup };
-static const MGVTBL mmap_write_table = { 0, mmap_write, mmap_length, mmap_free, mmap_free, 0, mmap_dup };
+static const MGVTBL mmap_read_table  = { NULL, NULL,       mmap_length, mmap_free, mmap_free, 0, mmap_dup };
+static const MGVTBL mmap_write_table = { NULL, mmap_write, mmap_length, mmap_free, mmap_free, 0, mmap_dup };
 
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
@@ -278,17 +278,22 @@ static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	return (struct mmap_info*) magic->mg_ptr;
 }
 
+static void magic_end(pTHX_ void* info) {
+	Perl_warn(aTHX_ "# Unlocking!\n");
+	MUTEX_UNLOCK(&((struct mmap_info*)info)->data_mutex);
+}
+
 #define YES &PL_sv_yes
 
 #define MAP_CONSTANT(cons) hv_store(map_constants, #cons, sizeof #cons - 1, newSVuv(cons), 0)
 #define ADVISE_CONSTANT(key, value) hv_store(advise_constants, key, sizeof key - 1, newSVuv(value), 0)
 
-MODULE = Sys::Mmap::Simple				PACKAGE = Sys::Mmap::Simple
+MODULE = File::Map				PACKAGE = File::Map
 
 PROTOTYPES: DISABLED
 
 BOOT:
-	HV* map_constants = get_hv("Sys::Mmap::Simple::MAP_CONSTANTS", TRUE);
+	HV* map_constants = get_hv("File::Map::MAP_CONSTANTS", TRUE);
 	MAP_CONSTANT(PROT_NONE);
 	MAP_CONSTANT(PROT_READ);
 	MAP_CONSTANT(PROT_WRITE);
@@ -300,7 +305,7 @@ BOOT:
 	MAP_CONSTANT(MAP_FILE);
 	/**/
 #ifdef MADV_NORMAL
-	HV* advise_constants = get_hv("Sys::Mmap::Simple::ADVISE_CONSTANTS", TRUE | GV_ADDMULTI );
+	HV* advise_constants = get_hv("File::Map::ADVISE_CONSTANTS", TRUE | GV_ADDMULTI );
 	ADVISE_CONSTANT("normal", MADV_NORMAL);
 	ADVISE_CONSTANT("random", MADV_RANDOM);
 	ADVISE_CONSTANT("sequential", MADV_SEQUENTIAL);
@@ -399,7 +404,7 @@ advise(var, name)
 		STRLEN len;
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
 #ifdef MADV_NORMAL
-		HV* constants = get_hv("Sys::Mmap::Simple::ADVISE_CONSTANTS", FALSE);
+		HV* constants = get_hv("File::Map::ADVISE_CONSTANTS", FALSE);
 		HE* value = hv_fetch_ent(constants, name, 0, 0);
 		if (!value)
 			Perl_croak(aTHX_ "Invalid key for advise");
@@ -408,36 +413,33 @@ advise(var, name)
 #endif
 		ST(0) = YES;
 
-
 void
-locked(block, var)
+lock_map(var)
+	SV* var = deref_var(aTHX_ ST(0));
+	PROTOTYPE: \$
+	CODE:
+		struct mmap_info* info = get_mmap_magic(aTHX_ var, "lock_map");
+#ifdef USE_ITHREADS
+		LEAVE;
+		SAVEDESTRUCTOR_X(magic_end, info);
+		Perl_warn(aTHX_ "# Locking!\n");
+		MUTEX_LOCK(&info->data_mutex);
+		Perl_warn(aTHX_ "# Locked!\n");
+		ENTER;
+#endif
+
+#ifdef USE_ITHREADS
+void
+wait_until(block, var)
 	SV* block;
 	SV* var = deref_var(aTHX_ ST(1));
 	PROTOTYPE: &\$
 	PPCODE:
-		struct mmap_info* info = get_mmap_magic(aTHX_ var, "do locked");
+		struct mmap_info* info = get_mmap_magic(aTHX_ var, "wait_until");
 		SAVESPTR(DEFSV);
 		DEFSV = var;
-		PUSHMARK(SP);
-#ifdef USE_ITHREADS
-		MUTEX_LOCK(&info->data_mutex);
-		call_sv(block, GIMME_V | G_EVAL | G_NOARGS);
-		MUTEX_UNLOCK(&info->data_mutex);
-		if (SvTRUE(ERRSV))
-			Perl_croak(aTHX_ NULL);
-#else
-		call_sv(block, GIMME_V | G_NOARGS);
-#endif
-		SPAGAIN;
-
-#ifdef USE_ITHREADS
-void
-wait_until(block)
-	SV* block;
-	PROTOTYPE: &
-	PPCODE:
-		struct mmap_info* info = get_mmap_magic(aTHX_ DEFSV, "wait_until");
 		while (1) {
+			Perl_warn(aTHX_ "# Condition wait\n");
 			PUSHMARK(SP);
 			call_sv(block, G_SCALAR | G_NOARGS);
 			SPAGAIN;
@@ -448,17 +450,20 @@ wait_until(block)
 		}
 
 void
-notify()
-	PROTOTYPE:
+notify(var)
+	SV* var = deref_var(aTHX_ ST(0));
+	PROTOTYPE: \$
 	CODE:
-		struct mmap_info* info = get_mmap_magic(aTHX_ DEFSV, "notify");
+		struct mmap_info* info = get_mmap_magic(aTHX_ var, "notify");
+		Perl_warn(aTHX_ "# Notifying\n");
 		COND_SIGNAL(&info->cond);
 
 void
-broadcast()
-	PROTOTYPE:
+broadcast(var)
+	SV* var = deref_var(aTHX_ ST(0));
+	PROTOTYPE: \$
 	CODE:
-		struct mmap_info* info = get_mmap_magic(aTHX_ DEFSV, "broadcast");
+		struct mmap_info* info = get_mmap_magic(aTHX_ var, "broadcast");
 		COND_BROADCAST(&info->cond);
 
 #endif /* USE ITHREADS */

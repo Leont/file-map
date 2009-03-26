@@ -1,4 +1,4 @@
-Revision history for Sys-Mmap-Simple
+Revision history for File-Map
 
 0.13    2009-02-14
         API break: renamed conditional functions, lowercased export tags

@@ -3,7 +3,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-	use_ok( 'Sys::Mmap::Simple' );
+	use_ok( 'File::Map' );
 }
 
-diag( "Testing Sys::Mmap::Simple $Sys::Mmap::Simple::VERSION, Perl $], $^X" );
+diag( "Testing File::Map $File::Map::VERSION, Perl $], $^X" );

@@ -1,8 +1,8 @@
 Build.PL			Module::Build - Builds and installs Perl modules
 Changes				A list of changes of different versions of this distribution
 LICENSE				Information about licensing
-lib/Sys/Mmap/Simple.pm		The Perl part of this library
-lib/Sys/Mmap/Simple.xs		The C/XS part of this library
+lib/File/Map.pm		The Perl part of this library
+lib/File/Map.xs		The C/XS part of this library
 Makefile.PL			A passthrough builder for Module::Build
 MANIFEST			This list of files
 META.yml			A computer readable description of this distribution
