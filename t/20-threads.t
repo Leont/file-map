@@ -35,8 +35,6 @@ my $thread2 = async {
 	wait_until { $counter++ } $variable;
 };
 
-diag("started thread");
-
 sleep 1;
 {
 	lock_map $variable;

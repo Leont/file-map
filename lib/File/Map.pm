@@ -95,11 +95,11 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.13
+Version 0.14
 
 =head1 SYNOPSIS
 
- use File::Map ':MAP';
+ use File::Map ':map';
  
  map_file my $mmap, $filename;
  if ($mmap ne "foobar") {
@@ -230,25 +230,23 @@ Specifies that the application expects that it will not access the mapped variab
 
 =head2 Locking
 
-These locking functions provide locking for threads for the mapped region. The mapped region has an internal lock and condition variable. The condition variable functions(C<wait_until>, C<notify>, C<broadcast>) can only be used inside a locked block. If your perl has been compiled without thread support the condition functions will not be available, and C<locked> will execute its block without locking.
+These locking functions provide locking for threads for the mapped region. The mapped region has an internal lock and condition variable. The condition variable functions(C<wait_until>, C<notify>, C<broadcast>) can only be used inside a locked block. If your perl has been compiled without thread support the condition functions will not be available.
 
 =over 4
 
-=item * locked { block } $lvalue
+=item * lock_map $lvalue
 
-Perform an action while keeping a thread lock on the map. The map is accessible as C<$_>. It will return whatever its block returns.
+Lock $lvalue until the end of the scope. If your perl does not support threads, this will be a no-op.
 
-=item * lock_map $value
-
-=item * wait_until { block }
+=item * wait_until { block } $lvalue
 
 Wait for block to become true. After every failed try, wait for a signal. It returns the value returned by the block.
 
-=item * notify
+=item * notify $lvalue
 
 This will signal to one listener that the map is available.
 
-=item * broadcast
+=item * broadcast $lvalue
 
 This will signal to all listeners that the map is available.
 
@@ -270,19 +268,19 @@ All previously mentioned functions are available for exportation, but none are e
 
 =over 4
 
-=item * map
+=item * :map
 
 map_handle, map_file, map_anonymous, sys_map, unmap
 
-=item * extra
+=item * :extra
 
 remap, sync, pin, unpin, advise
 
-=item * lock
+=item * :lock
 
 locked, wait_until, notify, broadcast
 
-=item * constants
+=item * :constants
 
 PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_ANONYMOUS, MAP_SHARED, MAP_PRIVATE, MAP_ANON, MAP_FILE
 
@@ -292,7 +290,7 @@ PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_ANONYMOUS, MAP_SHARED, MAP_PRIV
 
 If you C<use warnings>, this module will give warnings if the variable is improperly used (anything that changes its size). This can be turned off lexically by using C<no warnings 'substr'>.
 
-If an error occurs in any of these functions, an exception will be thrown. In particular; trying to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> or do C<locked> a variable that hasn't been mapped will cause an exception to be thrown.
+If an error occurs in any of these functions, an exception will be thrown. In particular; trying to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> or C<lock_map> a variable that hasn't been mapped will cause an exception to be thrown.
 
 =head1 DEPENDENCIES
 
@@ -300,7 +298,7 @@ This module does not have any dependencies on non-standard modules.
 
 =head1 PITFALLS
 
-You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults (more confusingly, it will work on some others).
+You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults (confusingly, it will work on some others).
 
 =head1 BUGS AND LIMITATIONS
 
@@ -318,7 +316,7 @@ automatically be notified of progress on your bug as I make changes.
 
 =item * L<IPC::Mmap>, another mmap module
 
-=item * L<mmap(2)>. your mmap man page
+=item * L<mmap(2)>, your mmap man page
 
 =item * CreateFileMapping at MSDN: L<http://msdn.microsoft.com/en-us/library/aa366537(VS.85).aspx>
 

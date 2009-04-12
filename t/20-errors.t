@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use bytes;
 
-use File::Map qw/:map locked sync/;
+use File::Map qw/:map lock_map sync/;
 use Test::More tests => 17;
 use Test::Warn;
 use Test::Exception;
@@ -39,7 +39,7 @@ throws_ok { sync my $foo } qr/^Could not sync: this variable is not memory mappe
 
 throws_ok { unmap my $foo } qr/^Could not unmap: this variable is not memory mapped at /, 'Can\'t unmap normal variables';
 
-throws_ok { locked {} my $foo } qr/^Could not do locked: this variable is not memory mapped at /, 'Can\'t lock normal variables';
+throws_ok { lock_map my $foo } qr/^Could not lock_map: this variable is not memory mapped at /, 'Can\'t lock normal variables';
 
 throws_ok { map_anonymous my $foo, 0 } qr/^Zero length specified for anonymous map at /, 'Have to provide a length for anonymous maps';
 

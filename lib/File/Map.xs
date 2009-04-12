@@ -279,7 +279,6 @@ static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 }
 
 static void magic_end(pTHX_ void* info) {
-	Perl_warn(aTHX_ "# Unlocking!\n");
 	MUTEX_UNLOCK(&((struct mmap_info*)info)->data_mutex);
 }
 
@@ -401,7 +400,6 @@ advise(var, name)
 	SV* name;
 	PROTOTYPE: \$@
 	CODE:
-		STRLEN len;
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
 #ifdef MADV_NORMAL
 		HV* constants = get_hv("File::Map::ADVISE_CONSTANTS", FALSE);
@@ -422,9 +420,7 @@ lock_map(var)
 #ifdef USE_ITHREADS
 		LEAVE;
 		SAVEDESTRUCTOR_X(magic_end, info);
-		Perl_warn(aTHX_ "# Locking!\n");
 		MUTEX_LOCK(&info->data_mutex);
-		Perl_warn(aTHX_ "# Locked!\n");
 		ENTER;
 #endif
 
@@ -439,7 +435,6 @@ wait_until(block, var)
 		SAVESPTR(DEFSV);
 		DEFSV = var;
 		while (1) {
-			Perl_warn(aTHX_ "# Condition wait\n");
 			PUSHMARK(SP);
 			call_sv(block, G_SCALAR | G_NOARGS);
 			SPAGAIN;
@@ -455,7 +450,6 @@ notify(var)
 	PROTOTYPE: \$
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "notify");
-		Perl_warn(aTHX_ "# Notifying\n");
 		COND_SIGNAL(&info->cond);
 
 void

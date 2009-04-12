@@ -2,9 +2,9 @@
 
 use strict;
 use warnings;
-use File::Map qw/:map locked sync/;
+use File::Map qw/:map lock_map sync/;
 use IO::Handle;
-use Test::More tests => 19;
+use Test::More tests => 18;
 use Test::Warn;
 
 open my $self, '<', $0 or die "Couldn't open self: $!";
@@ -44,9 +44,7 @@ s/e/a/g for ($mmaped, $slurped);
 
 is($mmaped, $slurped, "slurped is mmaped after translation");
 
-locked { is($_, $slurped, '$_ == $slurped') } $mmaped;
-
-locked { tr/r/t/ }  $mmaped;
+$mmaped  =~ tr/r/t/ ;
 $slurped =~ tr/r/t/;
 
 is($mmaped, $slurped, "Translated");
