@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+0.14    2009-04-12
+		Module rename from Sys-Mmap-Simple to File-Map
+		Major API break on locking functions
+
 0.13    2009-02-14
         API break: renamed conditional functions, lowercased export tags
 

@@ -13,7 +13,7 @@ use base qw/Exporter DynaLoader/;
 use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
 
