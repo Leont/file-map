@@ -68,16 +68,14 @@ struct mmap_info {
 
 #ifdef WIN32
 
-static void croak_sys(pTHX_ const char* format) {
+static void get_sys_error(char* buffer, size_t buffer_size) {
 	DWORD last_error = GetLastError(); 
-	char buffer[128];
 
 	DWORD format_flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-	int length = FormatMessage(format_flags, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)buffer, sizeof buffer, NULL);
-	if (buffer[length - 2] == '\r')
+	int length = FormatMessage(format_flags, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)buffer, buffer_size, NULL);
+	if (buffer[length - 2] == '\r') {
 		buffer[length - 2] =  '\0';
-
-	Perl_croak(aTHX_ format, buffer);
+	}
 }
 
 static DWORD page_size() {
@@ -114,14 +112,13 @@ static const struct {
 };
 #else
 
-static void croak_sys(pTHX_ const char* format) {
-	char buffer[128];
+static void get_sys_error(char* buffer, size_t buffer_size) {
 #ifdef _GNU_SOURCE
-	const char* message = strerror_r(errno, buffer, sizeof buffer);
-	Perl_croak(aTHX_ format, message);
+	const char* message = strerror_r(errno, buffer, buffer_size);
+	if (message != buffer)
+		memcpy(buffer, message, buffer_size);
 #else
-	strerror_r(errno, buffer, sizeof buffer);
-	Perl_croak(aTHX_ format, buffer);
+	strerror_r(errno, buffer, buffer_size);
 #endif
 }
 
@@ -133,6 +130,23 @@ static size_t page_size() {
 	return pagesize;
 }
 #endif
+
+static void die_sys(pTHX_ const char* format) {
+	char buffer[128];
+	get_sys_error(buffer, sizeof buffer);
+	Perl_croak(aTHX, format, buffer);
+}
+
+static void croak_sys(pTHX_ const char* format) {
+	char buffer[128];
+	dSP;
+	get_sys_error(buffer, sizeof buffer);
+	SV* const tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
+	PUSHMARK(SP);
+	XPUSHs(tmp);
+	PUTBACK;
+	call_pv("Carp::croak", G_VOID | G_DISCARD);
+}
 
 #define PROT_ALL (PROT_READ | PROT_WRITE | PROT_EXEC)
 
@@ -170,7 +184,7 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	MUTEX_LOCK(&info->count_mutex);
 	if (--info->count == 0) {
 		if (munmap(info->real_address, info->real_length) == -1)
-			croak_sys(aTHX_ "Could not munmap: %s");
+			die_sys(aTHX_ "Could not munmap: %s");
 		COND_DESTROY(&info->cond);
 		MUTEX_DESTROY(&info->data_mutex);
 		MUTEX_UNLOCK(&info->count_mutex);
@@ -179,12 +193,12 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	}
 	else {
 		if (msync(info->real_address, info->real_length, MS_ASYNC) == -1)
-			croak_sys(aTHX_ "Could not msync: %s");
+			die_sys(aTHX_ "Could not msync: %s");
 		MUTEX_UNLOCK(&info->count_mutex);
 	}
 #else
 	if (munmap(info->real_address, info->real_length) == -1)
-		croak_sys(aTHX_ "Could not munmap: %s");
+		die_sys(aTHX_ "Could not munmap: %s");
 	Safefree(info);
 #endif 
 	SvPVX(var) = NULL;
@@ -225,7 +239,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t 
 	HANDLE file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
 	HANDLE mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, 0, length, NULL);
 	if (mapping == NULL)
-		croak_sys(aTHX_ "Could not mmap: %s\n");
+		croak_sys(aTHX_ "Could not mmap: %s");
 	DWORD viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot | PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
 	address = MapViewOfFile(mapping, viewflag, 0, offset, length);
 	CloseHandle(mapping);
@@ -234,7 +248,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t 
 	address = mmap(0, length, prot, flags, fd, offset);
 	if (address == MAP_FAILED)
 #endif
-		croak_sys(aTHX_ "Could not mmap: %s\n");
+		croak_sys(aTHX_ "Could not mmap: %s");
 	return address;
 }
 
@@ -321,7 +335,7 @@ BOOT:
 #endif
 #endif
 
-SV*
+void
 _mmap_impl(var, length, prot, flags, fd, offset)
 	SV* var = deref_var(aTHX_ ST(0));
 	size_t length;
@@ -338,9 +352,8 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 		struct mmap_info* magical = initialize_mmap_info(address, length, correction);
 		reset_var(var, magical);
 		add_magic(aTHX_ var, magical, prot & PROT_WRITE);
-		ST(0) = YES;
 
-SV*
+void
 sync(var, sync = YES)
 	SV* var = deref_var(aTHX_ ST(0));
 	SV* sync;
@@ -348,11 +361,10 @@ sync(var, sync = YES)
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
 		if (msync(info->real_address, info->real_length, SvTRUE(sync) ? MS_SYNC : MS_ASYNC ) == -1)
-			croak_sys(aTHX_ "Could not sync: %s");
-		ST(0) = YES;
+			die_sys(aTHX_ "Could not sync: %s");
 
 #ifdef __linux__
-SV*
+void
 remap(var, new_size)
 	SV* var = deref_var(aTHX_ ST(0));
 	size_t new_size;
@@ -360,41 +372,37 @@ remap(var, new_size)
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "remap");
 		if (mremap(info->real_address, info->real_length, new_size + (info->real_length - info->fake_length), 0) == MAP_FAILED)
-			croak_sys(aTHX_ "Could not remap: %s");
-		ST(0) = YES;
+			die_sys(aTHX_ "Could not remap: %s");
 
 #endif /* __linux__ */
 
-SV*
+void
 unmap(var)
 	SV* var = deref_var(aTHX_ ST(0));
 	PROTOTYPE: \$
 	CODE: 
 		get_mmap_magic(aTHX_ var, "unmap");
 		sv_unmagic(var, PERL_MAGIC_uvar);
-		ST(0) = YES;
 
-SV*
+void
 pin(var)
 	SV* var = deref_var(aTHX_ ST(0));
 	PROTOTYPE: \$
 	CODE: 
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "pin");
 		if (mlock(info->real_address, info->real_length) == -1)
-			croak_sys(aTHX_ "Could not mlock: %s");
-		ST(0) = YES;
+			die_sys(aTHX_ "Could not mlock: %s");
 
-SV*
+void
 unpin(var)
 	SV* var = deref_var(aTHX_ ST(0));
 	PROTOTYPE: \$
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "unpin");
 		if (munlock(info->real_address, info->real_length) == -1)
-			croak_sys(aTHX_ "Could not munlock: %s");
-		ST(0) = YES;
+			die_sys(aTHX_ "Could not munlock: %s");
 
-SV*
+void
 advise(var, name)
 	SV* var = deref_var(aTHX_ ST(0));
 	SV* name;
@@ -407,9 +415,8 @@ advise(var, name)
 		if (!value)
 			Perl_croak(aTHX_ "Invalid key for advise");
 		if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value)) == -1))
-			croak_sys(aTHX_ "Could not madvice: %s");
+			die_sys(aTHX_ "Could not madvice: %s");
 #endif
-		ST(0) = YES;
 
 void
 lock_map(var)

@@ -12,10 +12,13 @@ use warnings;
 use base qw/Exporter DynaLoader/;
 use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
+use Readonly 1.03;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
+
+Readonly my $anon_fh, -1;
 
 bootstrap File::Map $VERSION;
 
@@ -48,14 +51,13 @@ my %protection_for = (
 
 ## no critic ProhibitSubroutinePrototypes
 
-#These must be defined before sys_map to ignore its prototype
-
 sub map_handle(\$*@) {
 	my ($var_ref, $glob, $mode, $offset, $length) = @_;
 	my $fh = qualify_to_ref($glob, caller);
 	$offset ||= 0;
 	$length ||= (-s $fh) - $offset;
-	return sys_map($var_ref, $length, $protection_for{ $mode || '<' }, $MAP_CONSTANTS{MAP_SHARED} | $MAP_CONSTANTS{MAP_FILE}, $fh, $offset);
+	_mmap_impl($var_ref, $length, $protection_for{ $mode || '<' }, $MAP_CONSTANTS{MAP_SHARED} | $MAP_CONSTANTS{MAP_FILE}, fileno $fh, $offset);
+	return;
 }
 
 sub map_file(\$@) {
@@ -64,25 +66,24 @@ sub map_file(\$@) {
 	$offset ||= 0;
 	open my $fh, $mode, $filename or croak "Couldn't open file $filename: $!";
 	$length ||= (-s $fh) - $offset;
-	my $ret = sys_map($var_ref, $length, $protection_for{$mode}, $MAP_CONSTANTS{MAP_SHARED} | $MAP_CONSTANTS{MAP_FILE}, $fh, $offset);
-	close $fh or croak "Couldn't close $filename: $!";
-	return $ret;
+	_mmap_impl($var_ref, $length, $protection_for{$mode}, $MAP_CONSTANTS{MAP_SHARED} | $MAP_CONSTANTS{MAP_FILE}, fileno $fh, $offset);
+	close $fh or croak "Couldn't close $filename after mapping: $!";
+	return;
 }
 
 sub map_anonymous(\$@) {
 	my ($var_ref, $length) = @_;
 	croak 'Zero length specified for anonymous map' if $length == 0;
-	return sys_map($var_ref, $length, $MAP_CONSTANTS{PROT_READ} | $MAP_CONSTANTS{PROT_WRITE}, $MAP_CONSTANTS{MAP_ANONYMOUS} | $MAP_CONSTANTS{MAP_SHARED});
+	_mmap_impl($var_ref, $length, $MAP_CONSTANTS{PROT_READ} | $MAP_CONSTANTS{PROT_WRITE}, $MAP_CONSTANTS{MAP_ANONYMOUS} | $MAP_CONSTANTS{MAP_SHARED}, $anon_fh, 0);
+	return;
 }
 
 sub sys_map(\$$$$*;$) {    ## no critic ProhibitManyArgs
 	my ($var_ref, $length, $protection, $flags, $glob, $offset) = @_;
-	my $fd = $flags & $MAP_CONSTANTS{MAP_ANONYMOUS} ? -1 : fileno qualify_to_ref($glob, caller);
+	my $fd = $flags & $MAP_CONSTANTS{MAP_ANONYMOUS} ? $anon_fh : fileno qualify_to_ref($glob, caller);
 	$offset ||= 0;
-	return eval { _mmap_impl($var_ref, $length, $protection, $flags, $fd, $offset) } || do {
-		$@ =~ s/\n\z//mx;
-		croak $@;
-	};
+	_mmap_impl($var_ref, $length, $protection, $flags, $fd, $offset);
+	return;
 }
 
 1;
@@ -95,7 +96,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.14
+Version 0.15
 
 =head1 SYNOPSIS
 

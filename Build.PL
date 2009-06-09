@@ -8,9 +8,6 @@ my $builder = Module::Build->new(
 	license            => 'perl',
 	dist_author        => 'Leon Timmermans <leont@cpan.org>',
 	dist_version_from  => 'lib/File/Map.pm',
-	configure_requires => {
-		'Module::Build'=> 0,
-	},
 	build_requires => {
 		'ExtUtils::CBuilder' => 0,
 		'Module::Build'=> 0,
@@ -23,15 +20,20 @@ my $builder = Module::Build->new(
 	},
 	requires => {
 		perl           => 5.007003,
+		Readonly       => 1.03,
+	},
+	recommends => {
+		'Readonly::XS' => 0,
 	},
 	meta_merge => {
 		resources      => {
 			bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map',
+			repository => 'http://github.com/Leont/file-map/tree',
 		},
 		keywords       => [ 'mmap', 'memory mapping' ],
 	},
 	add_to_cleanup     => ['File-Map-*'],
-	create_makefile_pl => 'passthrough',
+	create_makefile_pl => 'traditional',
 	sign               => 1,
 );
 
