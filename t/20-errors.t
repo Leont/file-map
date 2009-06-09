@@ -12,7 +12,8 @@ use Test::Exception;
 open my $self, '<', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };
 
-ok(map_anonymous(my $mmaped, length $slurped), 'Mapping succeeded');
+my $mmaped;
+lives_ok { map_anonymous($mmaped, length $slurped) } 'Mapping succeeded';
 
 substr $mmaped, 0, length $mmaped, $slurped;
 
