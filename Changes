@@ -1,5 +1,11 @@
 Revision history for File-Map
 
+0.15    2009-06-10
+        Made all functions return void
+        Replaced a magical value with a variable
+        Made error handling more robust
+        Made the compatibility Makefile 'traditional'
+
 0.14    2009-04-12
 		Module rename from Sys-Mmap-Simple to File-Map
 		Major API break on locking functions
