@@ -134,7 +134,7 @@ static size_t page_size() {
 static void die_sys(pTHX_ const char* format) {
 	char buffer[128];
 	get_sys_error(buffer, sizeof buffer);
-	Perl_croak(aTHX, format, buffer);
+	Perl_croak(aTHX_ format, buffer);
 }
 
 static void croak_sys(pTHX_ const char* format) {

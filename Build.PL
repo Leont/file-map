@@ -8,6 +8,9 @@ my $builder = Module::Build->new(
 	license            => 'perl',
 	dist_author        => 'Leon Timmermans <leont@cpan.org>',
 	dist_version_from  => 'lib/File/Map.pm',
+	configure_requires => {
+		'Module::Build' => 0,
+	},
 	build_requires => {
 		'ExtUtils::CBuilder' => 0,
 		'Module::Build'=> 0,
@@ -33,7 +36,7 @@ my $builder = Module::Build->new(
 		keywords       => [ 'mmap', 'memory mapping' ],
 	},
 	add_to_cleanup     => ['File-Map-*'],
-	create_makefile_pl => 'traditional',
+	create_makefile_pl => 'passthrough',
 	sign               => 1,
 );
 

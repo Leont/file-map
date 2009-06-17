@@ -14,7 +14,7 @@ use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 use Readonly 1.03;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
 
@@ -96,7 +96,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.15
+Version 0.16
 
 =head1 SYNOPSIS
 
