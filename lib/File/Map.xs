@@ -61,6 +61,7 @@ struct mmap_info {
 #ifdef USE_ITHREADS
 	perl_mutex count_mutex;
 	perl_mutex data_mutex;
+	PerlInterpreter* owner;
 	perl_cond cond;
 	int count;
 #endif
@@ -292,8 +293,10 @@ static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	return (struct mmap_info*) magic->mg_ptr;
 }
 
-static void magic_end(pTHX_ void* info) {
-	MUTEX_UNLOCK(&((struct mmap_info*)info)->data_mutex);
+static void magic_end(pTHX_ void* pre_info) {
+	struct mmap_info* info = (struct mmap_info*) pre_info;
+	info->owner = NULL;
+	MUTEX_UNLOCK(&info->data_mutex);
 }
 
 #define YES &PL_sv_yes
@@ -428,6 +431,7 @@ lock_map(var)
 		LEAVE;
 		SAVEDESTRUCTOR_X(magic_end, info);
 		MUTEX_LOCK(&info->data_mutex);
+		info->owner = aTHX;
 		ENTER;
 #endif
 
@@ -439,6 +443,8 @@ wait_until(block, var)
 	PROTOTYPE: &\$
 	PPCODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "wait_until");
+		if (info->owner != aTHX)
+			Perl_croak(aTHX_ "Trying to wait on an unlocked map");
 		SAVESPTR(DEFSV);
 		DEFSV = var;
 		while (1) {
@@ -457,6 +463,8 @@ notify(var)
 	PROTOTYPE: \$
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "notify");
+		if (info->owner != aTHX)
+			Perl_croak(aTHX_ "Trying to notify on an unlocked map");
 		COND_SIGNAL(&info->cond);
 
 void
@@ -465,6 +473,8 @@ broadcast(var)
 	PROTOTYPE: \$
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "broadcast");
+		if (info->owner != aTHX)
+			Perl_croak(aTHX_ "Trying to broadcast on an unlocked map");
 		COND_BROADCAST(&info->cond);
 
 #endif /* USE ITHREADS */
