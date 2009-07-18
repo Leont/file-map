@@ -22,7 +22,7 @@ my $builder = Module::Build->new(
 		threads        => 0,
 	},
 	requires => {
-		perl           => 5.007003,
+		perl           => 5.008,
 		Readonly       => 1.03,
 	},
 	recommends => {
