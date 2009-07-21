@@ -111,6 +111,14 @@ static const struct {
 	{ PAGE_EXECUTE_READWRITE, FILE_MAP_WRITE      | FILE_MAP_EXECUTE}, /* PROT_WRITE | PROT_EXEC */
 	{ PAGE_EXECUTE_READWRITE, FILE_MAP_ALL_ACCESS | FILE_MAP_EXECUTE}, /* PROT_READ| PROT_WRITE | PROT_EXEC */
 };
+
+#define madvise(address, length, advice) 0
+
+#define MADV_NORMAL 0
+#define MADV_RANDOM 0
+#define MADV_SEQUENTIAL 0
+#define MADV_WILLNEED 0
+#define MADV_DONTNEED 0
 #else
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
@@ -320,13 +328,13 @@ BOOT:
 	MAP_CONSTANT(MAP_ANON);
 	MAP_CONSTANT(MAP_FILE);
 	/**/
-#ifdef MADV_NORMAL
 	HV* advise_constants = get_hv("File::Map::ADVISE_CONSTANTS", TRUE | GV_ADDMULTI );
 	ADVISE_CONSTANT("normal", MADV_NORMAL);
 	ADVISE_CONSTANT("random", MADV_RANDOM);
 	ADVISE_CONSTANT("sequential", MADV_SEQUENTIAL);
 	ADVISE_CONSTANT("willneed", MADV_WILLNEED);
 	ADVISE_CONSTANT("dontneed", MADV_DONTNEED);
+	/* Linux specific advices */
 #ifdef MADV_REMOVE
 	ADVISE_CONSTANT("remove", MADV_REMOVE);
 #endif
@@ -336,6 +344,28 @@ BOOT:
 #ifdef MADV_DOFORK
 	ADVISE_CONSTANT("dofork", MADV_DOFORK);
 #endif
+	/* BSD & Solaris specific advice */
+#ifdef MADV_FREE
+	ADVISE_CONSTANT("free", MADV_FREE);
+#endif
+	/* FreeBSD specific advices */
+#ifdef MADV_NOSYNC
+	ADVISE_CONSTANT("nosync", MADV_NOSYNC);
+#endif
+#ifdef MADV_AUTOSYNC
+	ADVISE_CONSTANT("autosync", MADV_AUTOSYNC);
+#endif
+#ifdef MADV_NOCORE
+	ADVISE_CONSTANT("nocore", MADV_NOCORE);
+#endif
+#ifdef MADV_CORE
+	ADVISE_CONSTANT("core", MADV_CORE);
+#endif
+#ifdef MADV_PROTECT
+	ADVISE_CONSTANT("protect", MADV_PROTECT);
+#endif
+#ifdef MADV_SPACEAVAIL
+	ADVISE_CONSTANT("spaceavail", MADV_SPACEAVAIL);
 #endif
 
 void
@@ -412,14 +442,12 @@ advise(var, name)
 	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
-#ifdef MADV_NORMAL
 		HV* constants = get_hv("File::Map::ADVISE_CONSTANTS", FALSE);
 		HE* value = hv_fetch_ent(constants, name, 0, 0);
 		if (!value)
 			Perl_croak(aTHX_ "Invalid key for advise");
 		if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value)) == -1))
 			die_sys(aTHX_ "Could not madvice: %s");
-#endif
 
 void
 lock_map(var)

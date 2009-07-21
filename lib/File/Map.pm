@@ -201,7 +201,7 @@ Unlock the map from physical memory.
 
 =item * advise $lvalue, $advice
 
-Advise a certain memory usage pattern. This is not implemented on all operating systems, and may be a no-op. $advice is a string with one of the following values.
+Advise a certain memory usage pattern. This is not implemented on all operating systems, and may be a no-op. $advice is a string with one of the following values (on some systems there may be more values available, but this is not portable).
 
 =over 2
 
