@@ -5,7 +5,7 @@ package File::Map;
 # This is free software; you can redistribute it and/or modify it under
 # the same terms as perl itself.
 
-use 5.007003;
+use 5.008;
 use strict;
 use warnings;
 
@@ -14,7 +14,7 @@ use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 use Readonly 1.03;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
 
@@ -96,7 +96,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.16
+Version 0.17
 
 =head1 SYNOPSIS
 
