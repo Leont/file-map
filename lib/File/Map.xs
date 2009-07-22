@@ -182,11 +182,6 @@ static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	return 0;
 }
 
-static U32 mmap_length(pTHX_ SV* var, MAGIC* magic) {
-	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-	return info->fake_length;
-}
-
 static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
 #ifdef USE_ITHREADS
@@ -228,8 +223,8 @@ static int mmap_dup(pTHX_ MAGIC* magic, CLONE_PARAMS* param) {
 #define mmap_dup 0
 #endif
 
-static const MGVTBL mmap_read_table  = { NULL, NULL,       mmap_length, mmap_free, mmap_free, 0, mmap_dup };
-static const MGVTBL mmap_write_table = { NULL, mmap_write, mmap_length, mmap_free, mmap_free, 0, mmap_dup };
+static const MGVTBL mmap_read_table  = { NULL, NULL,       0, mmap_free, mmap_free, 0, mmap_dup };
+static const MGVTBL mmap_write_table = { NULL, mmap_write, 0, mmap_free, mmap_free, 0, mmap_dup };
 
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
