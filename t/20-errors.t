@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use bytes;
 
-use File::Map qw/:map lock_map sync/;
-use Test::More tests => 17;
+use File::Map qw/:map lock_map sync advise/;
+use Test::More tests => 18;
 use Test::Warn;
 use Test::Exception;
 
@@ -50,6 +50,8 @@ SKIP: {
 	skip "STDOUT is a file ", 1 if -f STDOUT;
 	throws_ok { map_handle my $foo, STDOUT } qr/^Could not mmap: /, 'Can\'t map STDOUT';
 }
+
+warning_is { advise $mmaped, 'sequential' } undef, 'advice $mmaped, \'readahead\'';
 
 warning_like { $mmaped = "foo" } qr/^Writing directly to a to a memory mapped file is not recommended at /, 'Trying to make it shorter gives a warning';
 
