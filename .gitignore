@@ -1,0 +1,16 @@
+_build
+Build
+blib
+Makefile.PL
+META.yml
+ppport.h
+*~
+*.bak
+*.swp
+*.tdy
+*.tar.gz
+File-Map-.*
+.git/*
+*.c
+*.o
+.ignore
