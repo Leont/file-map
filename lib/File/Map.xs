@@ -38,6 +38,10 @@
 #	define MAP_FILE 0
 #endif
 
+#ifndef MAP_VARIABLE
+#	define MAP_VARIABLE 0
+#endif
+
 #ifndef MIN
 #	define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
@@ -249,7 +253,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t 
 	CloseHandle(mapping);
 	if (address == NULL)
 #else
-	address = mmap(0, length, prot, flags, fd, offset);
+	address = mmap(0, length, prot, flags | MAP_VARIABLE, fd, offset);
 	if (address == MAP_FAILED)
 #endif
 		croak_sys(aTHX_ "Could not mmap: %s");
@@ -339,7 +343,7 @@ BOOT:
 #ifdef MADV_DOFORK
 	ADVISE_CONSTANT("dofork", MADV_DOFORK);
 #endif
-	/* BSD & Solaris specific advice */
+	/* BSD, Mac OS X & Solaris specific advice */
 #ifdef MADV_FREE
 	ADVISE_CONSTANT("free", MADV_FREE);
 #endif
@@ -439,9 +443,11 @@ advise(var, name)
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
 		HV* constants = get_hv("File::Map::ADVISE_CONSTANTS", FALSE);
 		HE* value = hv_fetch_ent(constants, name, 0, 0);
-		if (!value)
-			Perl_croak(aTHX_ "Invalid key for advise");
-		if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value)) == -1))
+		if (!value) {
+			if (ckWARN(WARN_PORTABLE))
+				Perl_warn(aTHX_ "Invalid key '%s' for advise", SvPV_nolen(name));
+		}
+		else if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value)) == -1))
 			die_sys(aTHX_ "Could not madvice: %s");
 
 void
