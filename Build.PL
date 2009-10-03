@@ -24,9 +24,10 @@ my $builder = Module::Build->new(
 	requires => {
 		perl           => 5.008,
 		Readonly       => 1.03,
+		Exporter       => 5.57,
 	},
 	recommends => {
-		'Readonly::XS' => 0,
+		'Readonly::XS' => 1.05,
 	},
 	meta_merge => {
 		resources      => {

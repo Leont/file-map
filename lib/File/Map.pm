@@ -9,30 +9,31 @@ use 5.008;
 use strict;
 use warnings;
 
-use base qw/Exporter DynaLoader/;
+use Exporter 5.57 'import';
+use XSLoader;
 use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 use Readonly 1.03;
 
-our $VERSION = '0.17';
-
 our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
 
-Readonly my $anon_fh, -1;
+BEGIN {
+	our $VERSION = '0.17';
 
-bootstrap File::Map $VERSION;
+	XSLoader::load('File::Map', $VERSION);
 
-while (my ($name, $value) = each %MAP_CONSTANTS) {
-	no strict 'refs';
-	*{$name} = sub { return $value };
-	push @EXPORT_OK, $name;
-	push @{ $EXPORT_TAGS{constants} }, $name;
+	while (my ($name, $value) = each %MAP_CONSTANTS) {
+		no strict 'refs';
+		*{$name} = sub { return $value };
+		push @EXPORT_OK, $name;
+		push @{ $EXPORT_TAGS{constants} }, $name;
+	}
 }
 
 my %export_data = (
 	'map'  => [qw/map_handle map_file map_anonymous unmap sys_map/],
 	extra  => [qw/remap sync pin unpin advise page_size/],
-	'lock' => [qw/locked wait_until notify broadcast lock_map/],
+	'lock' => [qw/wait_until notify broadcast lock_map/],
 );
 
 while (my ($category, $functions) = each %export_data) {
@@ -43,11 +44,13 @@ while (my ($category, $functions) = each %export_data) {
 }
 
 my %protection_for = (
-	'<'  => $MAP_CONSTANTS{PROT_READ},
-	'+<' => $MAP_CONSTANTS{PROT_READ} | $MAP_CONSTANTS{PROT_WRITE},
-	'>'  => $MAP_CONSTANTS{PROT_WRITE},
-	'+>' => $MAP_CONSTANTS{PROT_READ} | $MAP_CONSTANTS{PROT_WRITE},
+	'<'  => PROT_READ,
+	'+<' => PROT_READ | PROT_WRITE,
+	'>'  => PROT_WRITE,
+	'+>' => PROT_READ | PROT_WRITE,
 );
+
+Readonly my $anon_fh, -1;
 
 ## no critic ProhibitSubroutinePrototypes
 
@@ -56,7 +59,7 @@ sub map_handle(\$*@) {
 	my $fh = qualify_to_ref($glob, caller);
 	$offset ||= 0;
 	$length ||= (-s $fh) - $offset;
-	_mmap_impl($var_ref, $length, $protection_for{ $mode || '<' }, $MAP_CONSTANTS{MAP_SHARED} | $MAP_CONSTANTS{MAP_FILE}, fileno $fh, $offset);
+	_mmap_impl($var_ref, $length, $protection_for{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	return;
 }
 
@@ -66,7 +69,7 @@ sub map_file(\$@) {
 	$offset ||= 0;
 	open my $fh, $mode, $filename or croak "Couldn't open file $filename: $!";
 	$length ||= (-s $fh) - $offset;
-	_mmap_impl($var_ref, $length, $protection_for{$mode}, $MAP_CONSTANTS{MAP_SHARED} | $MAP_CONSTANTS{MAP_FILE}, fileno $fh, $offset);
+	_mmap_impl($var_ref, $length, $protection_for{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
 }
@@ -74,13 +77,13 @@ sub map_file(\$@) {
 sub map_anonymous(\$@) {
 	my ($var_ref, $length) = @_;
 	croak 'Zero length specified for anonymous map' if $length == 0;
-	_mmap_impl($var_ref, $length, $MAP_CONSTANTS{PROT_READ} | $MAP_CONSTANTS{PROT_WRITE}, $MAP_CONSTANTS{MAP_ANONYMOUS} | $MAP_CONSTANTS{MAP_SHARED}, $anon_fh, 0);
+	_mmap_impl($var_ref, $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, $anon_fh, 0);
 	return;
 }
 
 sub sys_map(\$$$$*;$) {    ## no critic ProhibitManyArgs
 	my ($var_ref, $length, $protection, $flags, $glob, $offset) = @_;
-	my $fd = $flags & $MAP_CONSTANTS{MAP_ANONYMOUS} ? $anon_fh : fileno qualify_to_ref($glob, caller);
+	my $fd = ($flags & MAP_ANONYMOUS) ? $anon_fh : fileno qualify_to_ref($glob, caller);
 	$offset ||= 0;
 	_mmap_impl($var_ref, $length, $protection, $flags, $fd, $offset);
 	return;
@@ -102,9 +105,9 @@ Version 0.17
 
  use File::Map ':map';
  
- map_file my $mmap, $filename;
- if ($mmap ne "foobar") {
-     $mmap =~ s/bar/quz/g;
+ map_file my $map, $filename;
+ if ($map ne "foobar") {
+     $map =~ s/bar/quz/g;
  }
 
 =head1 DESCRIPTION
@@ -119,7 +122,7 @@ File::Map maps files or anonymous memory into perl variables.
 
 =item * It is an efficient way to slurp an entire file. Unlike for example L<File::Slurp>, this module returns almost immediately, loading the pages lazily on access. This means you only 'pay' for the parts of the file you actually use.
 
-=item * Perl normally never returns memory to the system while running, mapped memory can be returned.
+=item * Perl usually doesn't return memory to the system while running, mapped memory can be returned.
 
 =back
 
@@ -139,7 +142,7 @@ It offers a simple interface targeted at common usage patterns
 
 =item * Files are mapped into a variable that can be read just like any other variable, and it can be written to using standard Perl techniques such as regexps and C<substr>.
 
-=item * Files can be mapped using a set of simple functions. There is no need to know weird constants or 6 arguments.
+=item * Files can be mapped using a set of simple functions. There is no need to know weird constants or the order of 6 arguments.
 
 =item * It will automatically unmap the file when the scalar gets destroyed. This works correctly even in multi-threaded programs.
 
@@ -147,7 +150,7 @@ It offers a simple interface targeted at common usage patterns
 
 =item * Portability
 
-File::Map supports both POSIX systems and Windows.
+File::Map supports Unix, VMS and Windows.
 
 =item * Thread synchronization
 
@@ -165,11 +168,11 @@ The following functions for mapping a variable are available for exportation. Th
 
 =item * map_handle $lvalue, *filehandle, $mode = '<', $offset = 0, $length = -s(*handle) - $offset
 
-Use a filehandle to mmap into an lvalue. *filehandle may be a bareword, constant, scalar expression, typeglob, or a reference to a typeglob. $mode uses the same format as C<open> does. $offset and $length are byte positions in the file, and default to mapping the whole file.
+Use a filehandle to map into an lvalue. *filehandle may be a bareword, constant, scalar expression, typeglob, or a reference to a typeglob. $mode uses the same format as C<open> does. $offset and $length are byte positions in the file, and default to mapping the whole file.
 
 =item * map_file $lvalue, $filename, $mode = '<', $offset = 0, $length = -s($filename) - $offset
 
-Open a file and mmap it into an lvalue. Other than $filename, all arguments work as in map_handle.
+Open a file and map it into an lvalue. Other than $filename, all arguments work as in map_handle.
 
 =item * map_anonymous $lvalue, $length
 
@@ -177,7 +180,7 @@ Map an anonymous piece of memory.
 
 =item * sys_map $lvalue, $length, $protection, $flags, *filehandle, $offset = 0
 
-Low level map operation. It accepts the same constants as mmap does (except its first argument obviously). If you don't know how mmap works you probably shouldn't be using this.
+Low level map operation. It accepts the same constants as map does (except its first argument obviously). If you don't know how mmap works you probably shouldn't be using this.
 
 =item * sync $lvalue, $synchronous = 1
 
@@ -201,7 +204,7 @@ Unlock the map from physical memory.
 
 =item * advise $lvalue, $advice
 
-Advise a certain memory usage pattern. This is not implemented on all operating systems, and may be a no-op. $advice is a string with one of the following values (on some systems there may be more values available, but this is not portable).
+Advise a certain memory usage pattern. This is not implemented on all operating systems, and may be a no-op. The following values for $advice are always accepted:.
 
 =over 2
 
@@ -226,6 +229,8 @@ Specifies that the application expects to access the mapped variable in the near
 Specifies that the application expects that it will not access the mapped variable in the near future.
 
 =back
+
+On some systems there may be more values available, but this can not be relied on. Non-existent values for $advice will be ignored.
 
 =back
 
@@ -279,7 +284,7 @@ remap, sync, pin, unpin, advise
 
 =item * :lock
 
-locked, wait_until, notify, broadcast
+lock_map, wait_until, notify, broadcast
 
 =item * :constants
 
@@ -305,7 +310,7 @@ You probably don't want to use C<E<gt>> as a mode. This does not give you readin
 
 As any piece of software, bugs are likely to exist here. Bug reports are welcome.
 
-Please report any bugs or feature requests to C<bug-sys-mmap-simple at rt.cpan.org>, or through
+Please report any bugs or feature requests to C<bug-file-map at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=File-Map>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
