@@ -325,7 +325,9 @@ BOOT:
 	MAP_CONSTANT(MAP_ANON);
 	MAP_CONSTANT(MAP_FILE);
 	/**/
-	HV* advise_constants = get_hv("File::Map::ADVISE_CONSTANTS", TRUE | GV_ADDMULTI );
+	
+	HV* advise_constants = newHV();
+	hv_store(PL_modglobal, "File::Map::ADVISE_CONSTANTS", 27, (SV*)advise_constants, 0);
 	ADVISE_CONSTANT("normal", MADV_NORMAL);
 	ADVISE_CONSTANT("random", MADV_RANDOM);
 	ADVISE_CONSTANT("sequential", MADV_SEQUENTIAL);
@@ -439,7 +441,7 @@ advise(var, name)
 	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
-		HV* constants = get_hv("File::Map::ADVISE_CONSTANTS", FALSE);
+		HV* constants = (HV*) *hv_fetch(PL_modglobal, "File::Map::ADVISE_CONSTANTS", 27, 0);
 		HE* value = hv_fetch_ent(constants, name, 0, 0);
 		if (!value) {
 			if (ckWARN(WARN_PORTABLE))
