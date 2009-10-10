@@ -227,8 +227,7 @@ static int mmap_dup(pTHX_ MAGIC* magic, CLONE_PARAMS* param) {
 #define mmap_dup 0
 #endif
 
-static const MGVTBL mmap_read_table  = { NULL, NULL,       0, mmap_free, mmap_free, 0, mmap_dup };
-static const MGVTBL mmap_write_table = { NULL, mmap_write, 0, mmap_free, mmap_free, 0, mmap_dup };
+static const MGVTBL mmap_table = { NULL, mmap_write, 0, mmap_free, mmap_free, 0, mmap_dup };
 
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
@@ -277,8 +276,7 @@ static struct mmap_info* initialize_mmap_info(void* address, size_t length, ptrd
 }
 
 static void add_magic(pTHX_ SV* var, struct mmap_info* magical, int writable) {
-	const MGVTBL* table = writable ? &mmap_write_table : &mmap_read_table;
-	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, table, (const char*) magical, 0);
+	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, &mmap_table, (const char*) magical, 0);
 	magic->mg_private = MMAP_MAGIC_NUMBER;
 #ifdef USE_ITHREADS
 	magic->mg_flags |= MGf_DUP;
