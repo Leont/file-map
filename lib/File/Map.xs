@@ -172,7 +172,7 @@ static void reset_var(SV* var, struct mmap_info* info) {
 
 static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-	if (SvPVX(var) != info->fake_address) {
+	if (!SvPOK(var) || SvPVX(var) != info->fake_address) {
 		if (ckWARN(WARN_SUBSTR)) {
 			Perl_warn(aTHX_ "Writing directly to a to a memory mapped file is not recommended");
 			if (SvLEN(var) > info->fake_length)
