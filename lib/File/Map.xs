@@ -170,19 +170,28 @@ static void reset_var(SV* var, struct mmap_info* info) {
 	SvPOK_only(var);
 }
 
+static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string, STRLEN len) {
+	if (ckWARN(WARN_SUBSTR)) {
+		Perl_warn(aTHX_ "Writing directly to a to a memory mapped file is not recommended");
+		if (SvLEN(var) > info->fake_length)
+			Perl_warn(aTHX_ "Truncating new value to size of the memory map");
+	}
+
+	Copy(string, info->fake_address, MIN(len, info->fake_length), char);
+	if (SvPOK(var))
+		SvPV_free(var);
+	reset_var(var, info);
+}
+
 static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-	if (!SvPOK(var) || SvPVX(var) != info->fake_address) {
-		if (ckWARN(WARN_SUBSTR)) {
-			Perl_warn(aTHX_ "Writing directly to a to a memory mapped file is not recommended");
-			if (SvLEN(var) > info->fake_length)
-				Perl_warn(aTHX_ "Truncating new value to size of the memory map");
-		}
-
-		Copy(SvPVX(var), info->fake_address, MIN(SvLEN(var) - 1, info->fake_length), char);
-		SvPV_free(var);
-		reset_var(var, info);
+	if (!SvPOK(var)) {
+		STRLEN len;
+		const char* string = SvPV(var, len);
+		mmap_fixup(aTHX_ var, info, string, len);
 	}
+	else if (SvPVX(var) != info->fake_address)
+		mmap_fixup(aTHX_ var, info, SvPVX(var), SvLEN(var) - 1);
 	return 0;
 }
 

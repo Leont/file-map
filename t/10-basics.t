@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Map qw/:map lock_map sync/;
 use IO::Handle;
-use Test::More tests => 18;
+use Test::More tests => 19;
 use Test::Warn;
 use Test::Exception;
 
@@ -52,7 +52,14 @@ print $copy $slurped;
 	$slurped =~ tr/r/t/;
 
 	is($mmaped, $slurped, "Translated");
+
+	{
+		no warnings 'substr';
+		$mmaped = 1;
+		like($mmaped, qr/^1/, '$mmaped should be like 1');
+	}
 }
+
 
 {
 	lives_ok { map_anonymous(my $mmap, 4096) } "mapped an anonymous piece of memory";
