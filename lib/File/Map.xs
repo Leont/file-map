@@ -306,7 +306,12 @@ static void magic_end(pTHX_ void* pre_info) {
 
 #define YES &PL_sv_yes
 
-#define MAP_CONSTANT(cons) hv_store(map_constants, #cons, sizeof #cons - 1, newSVuv(cons), 0)
+/*#define MAP_CONSTANT(cons) hv_store(map_constants, #cons, sizeof #cons - 1, newSVuv(cons), 0)*/
+#define MAP_CONSTANT(cons) STMT_START {\
+	newCONSTSUB(stash, #cons, newSVuv(cons));\
+	av_push(constants, newSVuv(cons));\
+	av_push(export_ok, newSVuv(cons));\
+} STMT_END
 #define ADVISE_CONSTANT(key, value) hv_store(advise_constants, key, sizeof key - 1, newSVuv(value), 0)
 
 MODULE = File::Map				PACKAGE = File::Map
@@ -314,7 +319,10 @@ MODULE = File::Map				PACKAGE = File::Map
 PROTOTYPES: DISABLED
 
 BOOT:
-	HV* map_constants = get_hv("File::Map::MAP_CONSTANTS", TRUE);
+	AV* constants = newAV();
+	hv_store(get_hv("File::Map::EXPORT_TAGS", TRUE), "constants", 9, newRV((SV*) constants), 0);
+	AV* export_ok = get_av("File::Map::EXPORT_OK", TRUE);
+	HV* stash = get_hv("File::Map::", FALSE);
 	MAP_CONSTANT(PROT_NONE);
 	MAP_CONSTANT(PROT_READ);
 	MAP_CONSTANT(PROT_WRITE);

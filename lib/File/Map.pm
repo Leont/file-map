@@ -15,19 +15,12 @@ use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 use Readonly 1.03;
 
-our (@EXPORT_OK, %EXPORT_TAGS, %MAP_CONSTANTS);
+our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
 	our $VERSION = '0.17';
 
 	XSLoader::load('File::Map', $VERSION);
-
-	while (my ($name, $value) = each %MAP_CONSTANTS) {
-		no strict 'refs';
-		*{$name} = sub { return $value };
-		push @EXPORT_OK, $name;
-		push @{ $EXPORT_TAGS{constants} }, $name;
-	}
 }
 
 my %export_data = (
