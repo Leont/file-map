@@ -1,6 +1,11 @@
 Revision history for File-Map
 
-0.16    2009-06017
+0.17    2009-10-25
+        Fixed bug in direct assignment of numbers
+        Demoted incorrect advice exception to a warning
+        Rewrote constant declarations
+
+0.16    2009-06-17
         Fixed compilation bug in die_sys
         Returned to passthrough Makefile, traditional is too broken
 
