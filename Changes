@@ -1,5 +1,8 @@
 Revision history for File-Map
 
+0.18    2009-10-25
+        Fixed previous bug further
+
 0.17    2009-10-25
         Fixed bug in direct assignment of numbers
         Demoted incorrect advice exception to a warning
