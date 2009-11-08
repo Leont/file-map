@@ -18,7 +18,7 @@ use Readonly 1.03;
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.18';
+	our $VERSION = '0.19';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -92,7 +92,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.18
+Version 0.19
 
 =head1 SYNOPSIS
 

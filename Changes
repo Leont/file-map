@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+0.19    2009-11-08
+        Handle reference assignment properly
+        Fixed bug in unthreaded builds
+
 0.18    2009-10-25
         Fixed previous bug further
 
