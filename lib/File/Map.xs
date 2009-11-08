@@ -178,6 +178,8 @@ static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string
 	}
 
 	Copy(string, info->fake_address, MIN(len, info->fake_length), char);
+	if (SvROK(var))
+		sv_unref_flags(var, SV_IMMEDIATE_UNREF);
 	if (SvPOK(var))
 		SvPV_free(var);
 	reset_var(var, info);
@@ -307,15 +309,16 @@ static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	return (struct mmap_info*) magic->mg_ptr;
 }
 
+#ifdef USE_ITHREADS
 static void magic_end(pTHX_ void* pre_info) {
 	struct mmap_info* info = (struct mmap_info*) pre_info;
 	info->owner = NULL;
 	MUTEX_UNLOCK(&info->data_mutex);
 }
+#endif
 
 #define YES &PL_sv_yes
 
-/*#define MAP_CONSTANT(cons) hv_store(map_constants, #cons, sizeof #cons - 1, newSVuv(cons), 0)*/
 #define MAP_CONSTANT(cons) STMT_START {\
 	newCONSTSUB(stash, #cons, newSVuv(cons));\
 	av_push(constants, newSVuv(cons));\
@@ -329,7 +332,7 @@ PROTOTYPES: DISABLED
 
 BOOT:
 	AV* constants = newAV();
-	hv_store(get_hv("File::Map::EXPORT_TAGS", TRUE), "constants", 9, newRV((SV*) constants), 0);
+	hv_store(get_hv("File::Map::EXPORT_TAGS", TRUE), "constants", 9, newRV_inc((SV*) constants), 0);
 	AV* export_ok = get_av("File::Map::EXPORT_OK", TRUE);
 	HV* stash = get_hv("File::Map::", FALSE);
 	MAP_CONSTANT(PROT_NONE);

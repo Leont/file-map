@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Map qw/:map lock_map sync/;
 use IO::Handle;
-use Test::More tests => 19;
+use Test::More tests => 20;
 use Test::Warn;
 use Test::Exception;
 
@@ -57,6 +57,11 @@ print $copy $slurped;
 		no warnings 'substr';
 		$mmaped = 1;
 		like($mmaped, qr/^1/, '$mmaped should be like 1');
+
+		my $ref = \$slurped;
+		my $strval = "$ref";
+		$mmaped = $ref;
+		like($mmaped, qr/^\Q$strval\E/, '$mmaped should handle reference assignment');
 	}
 }
 
