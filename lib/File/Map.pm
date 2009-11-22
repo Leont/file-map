@@ -18,7 +18,7 @@ use Readonly 1.03;
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.19';
+	our $VERSION = '0.20';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -45,7 +45,7 @@ my %protection_for = (
 
 Readonly my $anon_fh, -1;
 
-## no critic ProhibitSubroutinePrototypes
+## no critic (ProhibitSubroutinePrototypes)
 
 sub map_handle(\$*@) {
 	my ($var_ref, $glob, $mode, $offset, $length) = @_;
@@ -74,7 +74,7 @@ sub map_anonymous(\$@) {
 	return;
 }
 
-sub sys_map(\$$$$*;$) {    ## no critic ProhibitManyArgs
+sub sys_map(\$$$$*;$) {    ## no critic (ProhibitManyArgs)
 	my ($var_ref, $length, $protection, $flags, $glob, $offset) = @_;
 	my $fd = ($flags & MAP_ANONYMOUS) ? $anon_fh : fileno qualify_to_ref($glob, caller);
 	$offset ||= 0;
@@ -92,7 +92,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.19
+Version 0.20
 
 =head1 SYNOPSIS
 

@@ -99,7 +99,7 @@ static DWORD page_size() {
 #define munlock(address, length) ( VirtualUnlock(address, length) ? 0 : -1 )
 
 #ifndef FILE_MAP_EXECUTE
-#define FILE_MAP_EXECUTE 0
+#	define FILE_MAP_EXECUTE 0
 #endif
 
 static const struct {
@@ -118,11 +118,6 @@ static const struct {
 
 #define madvise(address, length, advice) 0
 
-#define MADV_NORMAL 0
-#define MADV_RANDOM 0
-#define MADV_SEQUENTIAL 0
-#define MADV_WILLNEED 0
-#define MADV_DONTNEED 0
 #else
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
@@ -142,6 +137,14 @@ static size_t page_size() {
 	}
 	return pagesize;
 }
+#endif
+
+#ifndef MADV_NORMAL
+#	define MADV_NORMAL 0
+#	define MADV_RANDOM 0
+#	define MADV_SEQUENTIAL 0
+#	define MADV_WILLNEED 0
+#	define MADV_DONTNEED 0
 #endif
 
 static void die_sys(pTHX_ const char* format) {
