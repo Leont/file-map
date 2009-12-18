@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+0.20    2009-12-18
+        Added support for pseudo-mapping empty files
+        Hopefully made File::Map Cygwin compatible
+
 0.19    2009-11-08
         Handle reference assignment properly
         Fixed bug in unthreaded builds
