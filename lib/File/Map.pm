@@ -7,7 +7,7 @@ package File::Map;
 
 use 5.008;
 use strict;
-use warnings;
+use warnings FATAL => 'all';
 
 use Exporter 5.57 'import';
 use XSLoader;
@@ -43,7 +43,7 @@ my %protection_for = (
 	'+>' => PROT_READ | PROT_WRITE,
 );
 
-Readonly my $anon_fh, -1;
+Readonly my $ANON_FH, -1;
 
 ## no critic (ProhibitSubroutinePrototypes)
 
@@ -70,13 +70,13 @@ sub map_file(\$@) {
 sub map_anonymous(\$@) {
 	my ($var_ref, $length) = @_;
 	croak 'Zero length specified for anonymous map' if $length == 0;
-	_mmap_impl($var_ref, $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, $anon_fh, 0);
+	_mmap_impl($var_ref, $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, $ANON_FH, 0);
 	return;
 }
 
 sub sys_map(\$$$$*;$) {    ## no critic (ProhibitManyArgs)
 	my ($var_ref, $length, $protection, $flags, $glob, $offset) = @_;
-	my $fd = ($flags & MAP_ANONYMOUS) ? $anon_fh : fileno qualify_to_ref($glob, caller);
+	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : fileno qualify_to_ref($glob, caller);
 	$offset ||= 0;
 	_mmap_impl($var_ref, $length, $protection, $flags, $fd, $offset);
 	return;
@@ -96,7 +96,7 @@ Version 0.20
 
 =head1 SYNOPSIS
 
- use File::Map ':map';
+ use File::Map 'map_file';
  
  map_file my $map, $filename;
  if ($map ne "foobar") {
@@ -147,7 +147,7 @@ File::Map supports Unix, VMS and Windows.
 
 =item * Thread synchronization
 
-It has built-in support for thread synchronization. 
+It has built-in support for thread synchronization.
 
 =back
 
@@ -175,17 +175,23 @@ Map an anonymous piece of memory.
 
 Low level map operation. It accepts the same constants as map does (except its first argument obviously). If you don't know how mmap works you probably shouldn't be using this.
 
-=item * sync $lvalue, $synchronous = 1
+=item * unmap $lvalue
 
-Flush changes made to the memory map back to disk. Mappings are always flushed when unmapped, so this is usually not necessary. If $synchronous is true and your operating system supports it, the flushing will be done synchronously.
+Unmap a variable. Note that normally this is not necessary, but it is included for completeness.
 
 =item * remap $lvalue, $new_size
 
 Try to remap $lvalue to a new size. It may fail if there is not sufficient space to expand a mapping at its current location. This call is linux specific and currently not supported on other systems.
 
-=item * unmap $lvalue
+=back
 
-Unmap a variable. Note that normally this is not necessary, but it is included for completeness.
+=head2 Auxiliary  
+
+=over 4
+
+=item * sync $lvalue, $synchronous = 1
+
+Flush changes made to the memory map back to disk. Mappings are always flushed when unmapped, so this is usually not necessary. If $synchronous is true and your operating system supports it, the flushing will be done synchronously.
 
 =item * pin $lvalue
 
@@ -201,7 +207,7 @@ Advise a certain memory usage pattern. This is not implemented on all operating 
 
 =over 2
 
-=item * normal 
+=item * normal
 
 Specifies that the application has no advice to give on its behavior with respect to the mapped variable. It is the default characteristic if no advice is given.
 
@@ -223,7 +229,7 @@ Specifies that the application expects that it will not access the mapped variab
 
 =back
 
-On some systems there may be more values available, but this can not be relied on. Non-existent values for $advice will be ignored.
+On some systems there may be more values available, but this can not be relied on. Unknown values for $advice will cause a warning but are further ignored.
 
 =back
 
@@ -239,7 +245,7 @@ Lock $lvalue until the end of the scope. If your perl does not support threads, 
 
 =item * wait_until { block } $lvalue
 
-Wait for block to become true. After every failed try, wait for a signal. It returns the value returned by the block.
+Wait for block to become true. After every failed attempt, wait for a signal. It returns the value returned by the block.
 
 =item * notify $lvalue
 
@@ -287,9 +293,55 @@ PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_ANONYMOUS, MAP_SHARED, MAP_PRIV
 
 =head1 DIAGNOSTICS
 
-If you C<use warnings>, this module will give warnings if the variable is improperly used (anything that changes its size). This can be turned off lexically by using C<no warnings 'substr'>.
+In this overview %f is the name of the function that produced the error, and %e is some error from your OS.
 
-If an error occurs in any of these functions, an exception will be thrown. In particular; trying to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> or C<lock_map> a variable that hasn't been mapped will cause an exception to be thrown.
+=head2 Exceptions
+
+=over 4
+
+=item * Could not %f: this variable is not memory mapped
+
+An attempt was made to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> or C<lock_map> an unmapped variable.
+
+=item * Could not %f: %e
+
+Your OS didn't allow File::Map to do what you asked it to do for the reason specefied in %e
+
+=item * Trying to %f on an unlocked map
+
+You tried to C<wait_until>, C<notify> or C<broadcast> on an unlocked variable.
+
+=item * Zero length not allowed for anonymous map
+
+A zero length anonymous map is not possible (or in any way useful).
+
+=item * Can't map empty file writably
+
+Empty files can't be mapped writably, because that wouldn't make any sense whatsoever.
+
+=back
+
+=head2 Warnings
+
+=over 4
+
+=item * Writing directly to a to a memory mapped file is not recommended
+
+Due to the way perl works internally, it's not possible to write a mapping implementation that allows direct assignment yet performs well. As a compromise, File::Map is capable of fixing up the mess if you do it nonetheless, but it will warn you that you're doing something you shouldn't. This warning is only given when C<use warnings 'substr'> is in effect.
+
+=item * Truncating new value to size of the memory map
+
+This warning is additional to the previous one, warning you that you're losing data. This warning is only given when C<use warnings 'substr'> is in effect.
+
+=item * Unknown advice '%s'
+
+You gave advise ani advice it didn't know. This is probably either a typo or a portability issue. This warning is only given when C<use warnings 'portable'> is in effect.
+
+=item * Syncing a readonly map makes no sense
+
+C<sync> flushes changes to the map to the filesystem. This obviously is of little use when you can't change the map. This warning is only given when C<use warnings 'io'> is in effect.
+
+=back
 
 =head1 DEPENDENCIES
 
@@ -297,7 +349,7 @@ This module does not have any dependencies on non-standard modules.
 
 =head1 PITFALLS
 
-You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults (confusingly, it will work on some others).
+You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults (confusingly, it will work on some others like x86).
 
 =head1 BUGS AND LIMITATIONS
 
