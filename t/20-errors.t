@@ -5,7 +5,7 @@ use warnings;
 use bytes;
 
 use File::Map qw/:map lock_map sync advise/;
-use Test::More tests => 20;
+use Test::More tests => 21;
 use Test::Warn;
 use Test::Exception;
 
@@ -44,14 +44,15 @@ throws_ok { lock_map my $foo } qr/^Could not lock_map: this variable is not memo
 
 throws_ok { map_anonymous my $foo, 0 } qr/^Zero length specified for anonymous map at /, 'Have to provide a length for anonymous maps';
 
-throws_ok { &map_anonymous("foo", 1000) } qr/^Invalid argument! at /, 'Can\'t ignore prototypes';
+throws_ok { &map_anonymous("foo", 1000) } qr/^Invalid argument at /, 'Can\'t ignore prototypes';
 
 SKIP: {
 	skip "STDOUT is a file ", 1 if -f STDOUT;
-	throws_ok { map_handle my $foo, STDOUT } qr/^Could not mmap: /, 'Can\'t map STDOUT';
+	throws_ok { map_handle my $foo, STDOUT } qr/^Could not map: /, 'Can\'t map STDOUT';
 }
 
 warning_is { advise $mmaped, 'sequential' } undef, 'advice $mmaped, \'readahead\'';
+warning_like { advise $mmaped, 'non-existent' } qr/^Unknown advice 'non-existent' at /, 'advice $mmaped, \'non-existent\'';
 
 warning_like { $mmaped = "foo" } qr/^Writing directly to a to a memory mapped file is not recommended at /, 'Trying to make it shorter gives a warning';
 

@@ -8,12 +8,12 @@ use Test::More tests => 20;
 use Test::Warn;
 use Test::Exception;
 
-open my $self, '<', $0 or die "Couldn't open self: $!";
+open my $self, '+<', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };
 
 {
 	my $mmaped;
-	lives_ok { map_handle($mmaped, $self) } "map succeeded";
+	lives_ok { map_handle($mmaped, $self, '+<') } "map succeeded";
 	ok(defined $mmaped,               "mmaped is defined");
 	ok( length $mmaped > 300,         "length of mmaped is big enough");
 	ok($mmaped eq $slurped,           "slurped is mmaped");

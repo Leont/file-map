@@ -153,15 +153,23 @@ static void die_sys(pTHX_ const char* format) {
 	Perl_croak(aTHX_ format, buffer);
 }
 
-static void croak_sys(pTHX_ const char* format) {
-	char buffer[128];
+static void real_croak_sv(pTHX_ SV* value) {
 	dSP;
-	get_sys_error(buffer, sizeof buffer);
-	SV* const tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
 	PUSHMARK(SP);
-	XPUSHs(tmp);
+	XPUSHs(value);
 	PUTBACK;
 	call_pv("Carp::croak", G_VOID | G_DISCARD);
+}
+
+static void real_croak_pv(pTHX_ const char* value) {
+	real_croak_sv(aTHX_ sv_2mortal(newSVpv(value, 0)));
+}
+
+static void croak_sys(pTHX_ const char* format) {
+	char buffer[128];
+	get_sys_error(buffer, sizeof buffer);
+	SV* const tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
+	real_croak_sv(aTHX_ tmp);
 }
 
 #define PROT_ALL (PROT_READ | PROT_WRITE | PROT_EXEC)
@@ -211,7 +219,7 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	MUTEX_LOCK(&info->count_mutex);
 	if (--info->count == 0) {
 		if (munmap(info->real_address, info->real_length) == -1)
-			die_sys(aTHX_ "Could not munmap: %s");
+			die_sys(aTHX_ "Could not unmap: %s");
 		COND_DESTROY(&info->cond);
 		MUTEX_DESTROY(&info->data_mutex);
 		MUTEX_UNLOCK(&info->count_mutex);
@@ -220,12 +228,12 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	}
 	else {
 		if (msync(info->real_address, info->real_length, MS_ASYNC) == -1)
-			die_sys(aTHX_ "Could not msync: %s");
+			die_sys(aTHX_ "Could not sync: %s");
 		MUTEX_UNLOCK(&info->count_mutex);
 	}
 #else
 	if (munmap(info->real_address, info->real_length) == -1)
-		die_sys(aTHX_ "Could not munmap: %s");
+		die_sys(aTHX_ "Could not unmap: %s");
 	Safefree(info);
 #endif 
 	SvPVX(var) = NULL;
@@ -289,7 +297,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t 
 	HANDLE file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
 	HANDLE mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, 0, length, NULL);
 	if (mapping == NULL)
-		croak_sys(aTHX_ "Could not mmap: %s");
+		croak_sys(aTHX_ "Could not map: %s");
 	DWORD viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot | PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
 	address = MapViewOfFile(mapping, viewflag, 0, offset, length);
 	CloseHandle(mapping);
@@ -298,7 +306,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t 
 	address = mmap(0, length, prot, flags | MAP_VARIABLE, fd, offset);
 	if (address == MAP_FAILED)
 #endif
-		croak_sys(aTHX_ "Could not mmap: %s");
+		croak_sys(aTHX_ "Could not map: %s");
 	return address;
 }
 
@@ -335,7 +343,7 @@ static int is_stattable(int fd) {
 
 static SV* deref_var(pTHX_ SV* var_ref) {
 	if (!SvROK(var_ref))
-		Perl_croak(aTHX_ "Invalid argument!");
+		Perl_croak(aTHX_ "Invalid argument");
 	return SvRV(var_ref);
 }
 
@@ -452,9 +460,9 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 		}
 		else {
 			if (prot & PROT_WRITE)
-				Perl_croak(aTHX_ "Can't map empty file writably");
+				real_croak_pv(aTHX_ "Can't map empty file writably");
 			if (!is_stattable(fd))
-				die_sys(aTHX_ "Could not mmap: %s");
+				real_croak_pv(aTHX_ "Could not map: handle doesn't refer to a file");
 			sv_setpvn(var, "", 0);
 
 			struct mmap_info* magical = initialize_mmap_info(SvPV_nolen(var), 0, 0);
@@ -470,6 +478,8 @@ sync(var, sync = YES)
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
 		IGNORE_EMPTY_MAP(info);
+		if (SvREADONLY(var) && ckWARN(WARN_IO))
+			Perl_warn(aTHX_ "Syncing a readonly map makes no sense");
 		if (msync(info->real_address, info->real_length, SvTRUE(sync) ? MS_SYNC : MS_ASYNC ) == -1)
 			die_sys(aTHX_ "Could not sync: %s");
 
@@ -506,7 +516,7 @@ pin(var)
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "pin");
 		IGNORE_EMPTY_MAP(info);
 		if (mlock(info->real_address, info->real_length) == -1)
-			die_sys(aTHX_ "Could not mlock: %s");
+			die_sys(aTHX_ "Could not pin: %s");
 
 void
 unpin(var)
@@ -516,7 +526,7 @@ unpin(var)
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "unpin");
 		IGNORE_EMPTY_MAP(info);
 		if (munlock(info->real_address, info->real_length) == -1)
-			die_sys(aTHX_ "Could not munlock: %s");
+			die_sys(aTHX_ "Could not unpin: %s");
 
 void
 advise(var, name)
@@ -530,10 +540,10 @@ advise(var, name)
 		HE* value = hv_fetch_ent(constants, name, 0, 0);
 		if (!value) {
 			if (ckWARN(WARN_PORTABLE))
-				Perl_warn(aTHX_ "Invalid key '%s' for advise", SvPV_nolen(name));
+				Perl_warn(aTHX_ "Unknown advice '%s'", SvPV_nolen(name));
 		}
-		else if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value)) == -1))
-			die_sys(aTHX_ "Could not madvice: %s");
+		else if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value))) == -1)
+			die_sys(aTHX_ "Could not advice: %s");
 
 void
 lock_map(var)
