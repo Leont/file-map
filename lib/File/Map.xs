@@ -390,8 +390,8 @@ static int _protection_value(pTHX_ SV* prot) {
 
 #define MAP_CONSTANT(cons) STMT_START {\
 	newCONSTSUB(stash, #cons, newSVuv(cons));\
-	av_push(constants, newSVuv(cons));\
-	av_push(export_ok, newSVuv(cons));\
+	av_push(constants, newSVpv(#cons, 0));\
+	av_push(export_ok, newSVpv(#cons, 0));\
 } STMT_END
 #define ADVISE_CONSTANT(key, value) hv_store(advise_constants, key, sizeof key - 1, newSVuv(value), 0)
 
@@ -514,7 +514,7 @@ remap(var, new_size)
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "remap");
 		if (EMPTY_MAP(info))
-			Perl_croak(aTHX_ "Can't remap empty map"); //XXX
+			Perl_croak(aTHX_ "Can't remap empty map"); /* XXX */
 		if (new_size == 0)
 			Perl_croak(aTHX_ "Can't remap to zero");
 		if (mremap(info->real_address, info->real_length, new_size + (info->real_length - info->fake_length), 0) == MAP_FAILED)
@@ -573,7 +573,6 @@ protect(var, prot)
 	SV* prot;
 	PROTOTYPE: \$@
 	CODE:
-		Perl_warn(aTHX_ "# flag = %lx, value = %s\n", SvOK(prot), SvPV_nolen(prot));
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
 		int prot_val = protection_value(prot);
 		if (!EMPTY_MAP(info))

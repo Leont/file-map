@@ -26,9 +26,6 @@ my $builder = Module::Build->new(
 		Readonly       => 1.03,
 		Exporter       => 5.57,
 	},
-	recommends => {
-		'Readonly::XS' => 1.05,
-	},
 	meta_merge => {
 		resources      => {
 			bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map',
@@ -37,7 +34,7 @@ my $builder = Module::Build->new(
 		keywords       => [ 'mmap', 'memory mapping' ],
 	},
 	add_to_cleanup     => ['File-Map-*'],
-	create_makefile_pl => 'passthrough',
+	create_makefile_pl => 'small',
 	sign               => 1,
 );
 
