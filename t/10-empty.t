@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Map qw/:map lock_map sync/;
 use IO::Handle;
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Test::Warn;
 use Test::Exception;
 
@@ -23,5 +23,10 @@ open my $fh, '+<', undef;
 	lives_ok { sync $mmaped } "can fake syncing empty file";
 }
 
-throws_ok { map_handle my $mmaped, $fh, '>' } qr/^Can't map empty file writably at/, "Can't map empty file writably";
+{
+	my $mmaped;
+	lives_ok { map_handle $mmaped, $fh, '>' } "Can't map empty file writably";
+
+	warnings_like { substr $mmaped, 0, 0, "1" } qr/^Can't overwrite an empty map at /, 'Shouldn\'t assign to empty map';
+}
 

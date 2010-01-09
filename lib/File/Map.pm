@@ -319,10 +319,6 @@ You tried to C<wait_until>, C<notify> or C<broadcast> on an unlocked variable.
 
 A zero length anonymous map is not possible (or in any way useful).
 
-=item * Can't map empty file writably
-
-Empty files can't be mapped writably, because that wouldn't make any sense whatsoever.
-
 =back
 
 =head2 Warnings
@@ -344,6 +340,10 @@ You gave advise ani advice it didn't know. This is probably either a typo or a p
 =item * Syncing a readonly map makes no sense
 
 C<sync> flushes changes to the map to the filesystem. This obviously is of little use when you can't change the map. This warning is only given when C<use warnings 'io'> is in effect.
+
+=item * Can't overwrite an empty map
+
+Overwriting an empty map is rather nonsensical, hence a warning is given when this is tried. This warning is only given when C<use warnings 'substr'> is in effect.
 
 =back
 

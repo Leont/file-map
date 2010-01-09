@@ -209,6 +209,16 @@ static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	return 0;
 }
 
+static int empty_write(pTHX_ SV* var, MAGIC* magic) {
+	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
+	if (!SvPOK(var) || sv_len(var) != 0) {
+		sv_setpvn(var, "", 0);
+		if (ckWARN(WARN_SUBSTR))
+			Perl_warn(aTHX_ "Can't overwrite an empty map");
+	}
+	return 0;
+}
+
 static int mmap_clear(pTHX_ SV* var, MAGIC* magic) {
 	Perl_die(aTHX_ "Can't clear a mapped variable");
 	return 0;
@@ -278,8 +288,8 @@ static int mmap_dup(pTHX_ MAGIC* magic, CLONE_PARAMS* param) {
 #define mmap_dup 0
 #endif
 
-static const MGVTBL mmap_table  = { 0, mmap_write, 0, mmap_clear, mmap_free,  0, mmap_dup };
-static const MGVTBL empty_table = { 0, 0,          0, mmap_clear, empty_free, 0, mmap_dup };
+static const MGVTBL mmap_table  = { 0, mmap_write,  0, mmap_clear, mmap_free,  0, mmap_dup };
+static const MGVTBL empty_table = { 0, empty_write, 0, mmap_clear, empty_free, 0, mmap_dup };
 
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
@@ -338,7 +348,7 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* ta
 }
 
 static int is_stattable(int fd) {
-	struct stat info;
+	Stat_t info;
 	return Fstat(fd, &info) == 0 && (S_ISREG(info.st_mode) || S_ISBLK(info.st_mode));
 }
 
@@ -473,8 +483,6 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE);
 		}
 		else {
-			if (prot & PROT_WRITE)
-				real_croak_pv(aTHX_ "Can't map empty file writably");
 			if (!is_stattable(fd))
 				real_croak_pv(aTHX_ "Could not map: handle doesn't refer to a file");
 			sv_setpvn(var, "", 0);
