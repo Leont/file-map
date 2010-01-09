@@ -97,6 +97,7 @@ static DWORD page_size() {
 #define msync(address, length, flags) ( FlushViewOfFile(address, length) ? 0 : -1 ) 
 #define mlock(address, length) ( VirtualLock(address, length) ? 0 : -1 )
 #define munlock(address, length) ( VirtualUnlock(address, length) ? 0 : -1 )
+#define mprotect(address, length, prot) ( VirtualProtect(address, length, winflags[prot & PROT_ALL].createflag) ? 0 : -1 )
 
 #ifndef FILE_MAP_EXECUTE
 #	define FILE_MAP_EXECUTE 0
@@ -362,6 +363,19 @@ static void magic_end(pTHX_ void* pre_info) {
 }
 #endif
 
+static int _protection_value(pTHX_ SV* prot) {
+	HV* protections = get_hv("File::Map::PROTECTION_FOR", FALSE);
+	if (SvPOK(prot) && hv_exists_ent(protections, prot, 0)) {
+		HE* prot_entry = hv_fetch_ent(protections, prot, FALSE, 0);
+		return SvIV(HeVAL(prot_entry));
+	}
+	else if (SvIOK(prot))
+		return SvIV(prot);
+	Perl_croak(aTHX_ "Unknown protection value '%s'", SvPV_nolen(prot));
+}
+
+#define protection_value(prot) _protection_value(aTHX_ prot)
+
 #define YES &PL_sv_yes
 
 #define MAP_CONSTANT(cons) STMT_START {\
@@ -544,6 +558,22 @@ advise(var, name)
 		}
 		else if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value))) == -1)
 			die_sys(aTHX_ "Could not advice: %s");
+
+void
+protect(var, prot)
+	SV* var = deref_var(aTHX_ ST(0));
+	SV* prot;
+	PROTOTYPE: \$@
+	CODE:
+		Perl_warn(aTHX_ "# flag = %lx, value = %s\n", SvOK(prot), SvPV_nolen(prot));
+		struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
+		int prot_val = protection_value(prot);
+		if (!EMPTY_MAP(info))
+			mprotect(info->real_address, info->real_length, prot_val);
+		if (prot_val & PROT_WRITE)
+			SvREADONLY_off(var);
+		else 
+			SvREADONLY_on(var);
 
 void
 lock_map(var)

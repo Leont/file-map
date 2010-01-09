@@ -25,7 +25,7 @@ BEGIN {
 
 my %export_data = (
 	'map'  => [qw/map_handle map_file map_anonymous unmap sys_map/],
-	extra  => [qw/remap sync pin unpin advise page_size/],
+	extra  => [qw/remap sync pin unpin advise page_size protect/],
 	'lock' => [qw/wait_until notify broadcast lock_map/],
 );
 
@@ -36,7 +36,7 @@ while (my ($category, $functions) = each %export_data) {
 	}
 }
 
-my %protection_for = (
+Readonly our %PROTECTION_FOR => (
 	'<'  => PROT_READ,
 	'+<' => PROT_READ | PROT_WRITE,
 	'>'  => PROT_WRITE,
@@ -52,7 +52,7 @@ sub map_handle(\$*@) {
 	my $fh = qualify_to_ref($glob, caller);
 	$offset ||= 0;
 	$length ||= (-s $fh) - $offset;
-	_mmap_impl($var_ref, $length, $protection_for{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	_mmap_impl($var_ref, $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	return;
 }
 
@@ -62,7 +62,7 @@ sub map_file(\$@) {
 	$offset ||= 0;
 	open my $fh, $mode, $filename or croak "Couldn't open file $filename: $!";
 	$length ||= (-s $fh) - $offset;
-	_mmap_impl($var_ref, $length, $protection_for{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	_mmap_impl($var_ref, $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
 }
@@ -161,7 +161,7 @@ The following functions for mapping a variable are available for exportation. Th
 
 =item * map_handle $lvalue, *filehandle, $mode = '<', $offset = 0, $length = -s(*handle) - $offset
 
-Use a filehandle to map into an lvalue. *filehandle may be a bareword, constant, scalar expression, typeglob, or a reference to a typeglob. $mode uses the same format as C<open> does. $offset and $length are byte positions in the file, and default to mapping the whole file.
+Use a filehandle to map into an lvalue. *filehandle may be a bareword, constant, scalar expression, typeglob, or a reference to a typeglob. $mode uses the same format as C<open> does (it currently accepts C<< < >>, C<< +< >>, C<< > >> and C<< +> >>). $offset and $length are byte positions in the file, and default to mapping the whole file.
 
 =item * map_file $lvalue, $filename, $mode = '<', $offset = 0, $length = -s($filename) - $offset
 
@@ -230,6 +230,10 @@ Specifies that the application expects that it will not access the mapped variab
 =back
 
 On some systems there may be more values available, but this can not be relied on. Unknown values for $advice will cause a warning but are further ignored.
+
+=item * protect $lvalue, $mode
+
+Change the memory protection of the mapping. $mode takes the same format as, but also accepts sys_map style constants.
 
 =back
 
