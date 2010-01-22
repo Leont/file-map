@@ -18,14 +18,14 @@ use Readonly 1.03;
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.20';
+	our $VERSION = '0.21';
 
 	XSLoader::load('File::Map', $VERSION);
 }
 
 my %export_data = (
 	'map'  => [qw/map_handle map_file map_anonymous unmap sys_map/],
-	extra  => [qw/remap sync pin unpin advise page_size protect/],
+	extra  => [qw/remap sync pin unpin advise protect/],
 	'lock' => [qw/wait_until notify broadcast lock_map/],
 );
 
@@ -101,6 +101,7 @@ Version 0.20
  map_file my $map, $filename;
  if ($map ne "foobar") {
      $map =~ s/bar/quz/g;
+     substr $map, 1024, 11, "Hello world";
  }
 
 =head1 DESCRIPTION
@@ -153,9 +154,11 @@ It has built-in support for thread synchronization.
 
 =head1 FUNCTIONS
 
+All functions take an lvalue as their first argument. This first argument has a prototype of C<\$>, B<be aware that this may change in a future release>.
+
 =head2 Mapping
 
-The following functions for mapping a variable are available for exportation. They all take an lvalue as their first argument, except page_size.
+The following functions for mapping a variable are available for exportation.
 
 =over 4
 
@@ -309,7 +312,7 @@ An attempt was made to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> 
 
 =item * Could not %f: %e
 
-Your OS didn't allow File::Map to do what you asked it to do for the reason specefied in %e
+Your OS didn't allow File::Map to do what you asked it to do for the reason specified in %e
 
 =item * Trying to %f on an unlocked map
 
@@ -335,7 +338,7 @@ This warning is additional to the previous one, warning you that you're losing d
 
 =item * Unknown advice '%s'
 
-You gave advise ani advice it didn't know. This is probably either a typo or a portability issue. This warning is only given when C<use warnings 'portable'> is in effect.
+You gave advise an advice it didn't know. This is probably either a typo or a portability issue. This warning is only given when C<use warnings 'portable'> is in effect.
 
 =item * Syncing a readonly map makes no sense
 
@@ -411,7 +414,7 @@ L<http://search.cpan.org/dist/File-Map>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2008, 2009 Leon Timmermans, all rights reserved.
+Copyright 2008, 2009, 2010 Leon Timmermans, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as perl itself.

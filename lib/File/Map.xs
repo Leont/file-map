@@ -294,6 +294,8 @@ static const MGVTBL empty_table = { 0, empty_write, 0, mmap_clear, empty_free, 0
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
 		Perl_croak(aTHX_ "Trying to map into a nonscalar!\n");
+	if (SvREADONLY(var))
+		Perl_croak(aTHX_ PL_no_modify);
 	if (SvMAGICAL(var) && mg_find(var, PERL_MAGIC_uvar))
 		sv_unmagic(var, PERL_MAGIC_uvar);
 	if (SvPOK(var)) 
