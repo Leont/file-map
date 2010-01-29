@@ -349,10 +349,12 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* ta
 		SvREADONLY_on(var);
 }
 
-static int is_stattable(int fd) {
+static int _is_stattable(pTHX_ int fd) {
 	Stat_t info;
 	return Fstat(fd, &info) == 0 && (S_ISREG(info.st_mode) || S_ISBLK(info.st_mode));
 }
+
+#define is_stattable(fd) _is_stattable(aTHX_ fd)
 
 static SV* deref_var(pTHX_ SV* var_ref) {
 	if (!SvROK(var_ref))

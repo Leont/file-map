@@ -18,7 +18,7 @@ use Readonly 1.03;
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.21';
+	our $VERSION = '0.22';
 
 	XSLoader::load('File::Map', $VERSION);
 }
