@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+0.22    2010-01-29
+        Made the protect unit tests portable to BSD
+        Fixed a portability issue with Win32
+
 0.21    2010-01-09
         Added protect()
         Made mapping empty files writably more user-friendly
