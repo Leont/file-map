@@ -322,6 +322,10 @@ You tried to C<wait_until>, C<notify> or C<broadcast> on an unlocked variable.
 
 A zero length anonymous map is not possible (or in any way useful).
 
+=item * Can't remap a shared mapping
+
+An attempts was made to remap a mapping that is shared among different threads, this is not possible.
+
 =back
 
 =head2 Warnings

@@ -517,6 +517,10 @@ remap(var, new_size)
 	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "remap");
+#ifdef USE_ITHREADS
+		if (info->count != 1)
+			Perl_croak(aTHX_ "Can't remap a shared mapping");
+#endif
 		if (EMPTY_MAP(info))
 			Perl_croak(aTHX_ "Can't remap empty map"); /* XXX */
 		if (new_size == 0)
