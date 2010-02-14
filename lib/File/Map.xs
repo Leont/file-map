@@ -9,6 +9,7 @@
 #ifdef __CYGWIN__
 #	undef WIN32
 #	undef _WIN32
+#	define madvise(address, length, advice) 0
 #endif
 
 #include <assert.h>
