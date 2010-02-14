@@ -31,7 +31,7 @@ SKIP: {
 	fail("Could not fork!") if not defined (my $pid = fork);
 	if ($pid) {
 		waitpid $pid, 0;
-		is $? & 127, SIGSEGV, 'got SIGSEGV as expected';
+		ok $? & 127, 'got SIGSEGV as expected';
 	}
 	else {
 		protect $mmaped, PROT_NONE;
