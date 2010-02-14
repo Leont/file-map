@@ -94,11 +94,13 @@ static DWORD page_size() {
 	return pagesize;
 }
 
+static DWORD old_protect;
+
 #define munmap(address, length) ( UnmapViewOfFile(address) ? 0 : -1 )
 #define msync(address, length, flags) ( FlushViewOfFile(address, length) ? 0 : -1 ) 
 #define mlock(address, length) ( VirtualLock(address, length) ? 0 : -1 )
 #define munlock(address, length) ( VirtualUnlock(address, length) ? 0 : -1 )
-#define mprotect(address, length, prot) ( VirtualProtect(address, length, winflags[prot & PROT_ALL].createflag) ? 0 : -1 )
+#define mprotect(address, length, prot) ( VirtualProtect(address, length, winflags[prot & PROT_ALL].createflag, &old_protect) ? 0 : -1 )
 
 #ifndef FILE_MAP_EXECUTE
 #	define FILE_MAP_EXECUTE 0
