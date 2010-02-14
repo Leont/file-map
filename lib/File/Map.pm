@@ -18,7 +18,7 @@ use Readonly 1.03;
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.22';
+	our $VERSION = '0.23';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -92,7 +92,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.20
+Version 0.23
 
 =head1 SYNOPSIS
 
@@ -312,7 +312,7 @@ An attempt was made to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> 
 
 =item * Could not %f: %e
 
-Your OS didn't allow File::Map to do what you asked it to do for the reason specified in %e
+Your OS didn't allow File::Map to do what you asked it to do for the reason specified in %e.
 
 =item * Trying to %f on an unlocked map
 

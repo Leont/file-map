@@ -1,5 +1,11 @@
 Revision history for File-Map
 
+0.23    2010-02-14
+        Blocked remap from remapping when a variable is shared among threads
+        Disabled madvise on cygwin
+        Fixed a compilation issue wrt VirtualProtect on Win32
+        Made PROT_NONE test more portable
+
 0.22    2010-01-29
         Made the protect unit tests portable to BSD
         Fixed a portability issue with Win32
