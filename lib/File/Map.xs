@@ -250,6 +250,7 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 		die_sys(aTHX_ "Could not unmap: %s");
 	Safefree(info);
 #endif 
+	SvREADONLY_off(var);
 	SvPVX(var) = NULL;
 	SvCUR(var) = 0;
 	return 0;
@@ -272,6 +273,7 @@ static int empty_free(pTHX_ SV* var, MAGIC* magic) {
 #else
 	Safefree(info);
 #endif 
+	SvREADONLY_off(var);
 	SvPV_free(var);
 	SvPVX(var) = NULL;
 	SvCUR(var) = 0;
