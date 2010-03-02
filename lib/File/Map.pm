@@ -18,7 +18,7 @@ use Readonly 1.03;
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.23';
+	our $VERSION = '0.24';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -92,7 +92,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.23
+Version 0.24
 
 =head1 SYNOPSIS
 
@@ -362,6 +362,8 @@ This module does not have any dependencies on non-standard modules.
 
 You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults (confusingly, it will work on some others like x86).
 
+On perl versions lower than 5.11.5 C<substr>, C<length> and C<pos> are limited to 32bit logic, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB.
+
 =head1 BUGS AND LIMITATIONS
 
 As any piece of software, bugs are likely to exist here. Bug reports are welcome.
@@ -379,6 +381,8 @@ automatically be notified of progress on your bug as I make changes.
 =item * L<IPC::Mmap>, another mmap module
 
 =item * L<mmap(2)>, your mmap man page
+
+=item * L<Win32::MMF>
 
 =item * CreateFileMapping at MSDN: L<http://msdn.microsoft.com/en-us/library/aa366537(VS.85).aspx>
 
