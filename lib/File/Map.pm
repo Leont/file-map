@@ -11,7 +11,6 @@ use warnings FATAL => 'all';
 
 use Exporter 5.57 'import';
 use XSLoader;
-use Symbol qw/qualify_to_ref/;
 use Carp qw/croak/;
 use Readonly 1.03;
 
@@ -45,40 +44,39 @@ Readonly our %PROTECTION_FOR => (
 
 Readonly my $ANON_FH, -1;
 
-## no critic (ProhibitSubroutinePrototypes)
+## no critic (Subroutines::RequireArgUnpacking)
 
-sub map_handle(\$*@) {
-	my ($var_ref, $glob, $mode, $offset, $length) = @_;
-	my $fh = qualify_to_ref($glob, caller);
+sub map_handle {
+	my (undef, $fh, $mode, $offset, $length) = @_;
 	$offset ||= 0;
 	$length ||= (-s $fh) - $offset;
-	_mmap_impl($var_ref, $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	_mmap_impl($_[0], $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	return;
 }
 
-sub map_file(\$@) {
-	my ($var_ref, $filename, $mode, $offset, $length) = @_;
+sub map_file {
+	my (undef, $filename, $mode, $offset, $length) = @_;
 	$mode   ||= '<';
 	$offset ||= 0;
 	open my $fh, $mode, $filename or croak "Couldn't open file $filename: $!";
 	$length ||= (-s $fh) - $offset;
-	_mmap_impl($var_ref, $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	_mmap_impl($_[0], $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
 }
 
-sub map_anonymous(\$@) {
-	my ($var_ref, $length) = @_;
+sub map_anonymous {
+	my (undef, $length) = @_;
 	croak 'Zero length specified for anonymous map' if $length == 0;
-	_mmap_impl($var_ref, $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, $ANON_FH, 0);
+	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, $ANON_FH, 0);
 	return;
 }
 
-sub sys_map(\$$$$*;$) {    ## no critic (ProhibitManyArgs)
-	my ($var_ref, $length, $protection, $flags, $glob, $offset) = @_;
-	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : fileno qualify_to_ref($glob, caller);
+sub sys_map {    ## no critic (ProhibitManyArgs)
+	my (undef, $length, $protection, $flags, $fh, $offset) = @_;
+	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : $fh;
 	$offset ||= 0;
-	_mmap_impl($var_ref, $length, $protection, $flags, $fd, $offset);
+	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset);
 	return;
 }
 

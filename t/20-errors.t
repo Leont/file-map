@@ -44,11 +44,11 @@ throws_ok { lock_map my $foo } qr/^Could not lock_map: this variable is not memo
 
 throws_ok { map_anonymous my $foo, 0 } qr/^Zero length specified for anonymous map at /, 'Have to provide a length for anonymous maps';
 
-throws_ok { &map_anonymous("foo", 1000) } qr/^Invalid argument at /, 'Can\'t ignore prototypes';
+throws_ok { &map_anonymous('foo', 1000) } qr/^Modification of a read-only value attempted at /, 'Can\'t use literal as variable';
 
 SKIP: {
 	skip "STDOUT is a file ", 1 if -f STDOUT;
-	throws_ok { map_handle my $foo, STDOUT } qr/^Could not map: /, 'Can\'t map STDOUT';
+	throws_ok { map_handle my $foo, \*STDOUT } qr/^Could not map: /, 'Can\'t map STDOUT';
 }
 
 warning_is { advise $mmaped, 'sequential' } undef, 'advice $mmaped, \'readahead\'';

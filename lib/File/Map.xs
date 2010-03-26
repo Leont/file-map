@@ -361,12 +361,6 @@ static int _is_stattable(pTHX_ int fd) {
 
 #define is_stattable(fd) _is_stattable(aTHX_ fd)
 
-static SV* deref_var(pTHX_ SV* var_ref) {
-	if (!SvROK(var_ref))
-		Perl_croak(aTHX_ "Invalid argument");
-	return SvRV(var_ref);
-}
-
 static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	MAGIC* magic;
 	if (!SvMAGICAL(var) || (magic = mg_find(var, PERL_MAGIC_uvar)) == NULL ||  magic->mg_private != MMAP_MAGIC_NUMBER)
@@ -474,7 +468,7 @@ BOOT:
 
 void
 _mmap_impl(var, length, prot, flags, fd, offset)
-	SV* var = deref_var(aTHX_ ST(0));
+	SV* var;
 	size_t length;
 	int prot;
 	int flags;
@@ -503,9 +497,8 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 
 void
 sync(var, sync = YES)
-	SV* var = deref_var(aTHX_ ST(0));
+	SV* var;
 	SV* sync;
-	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
 		IGNORE_EMPTY_MAP(info);
@@ -517,9 +510,8 @@ sync(var, sync = YES)
 #ifdef __linux__
 void
 remap(var, new_size)
-	SV* var = deref_var(aTHX_ ST(0));
+	SV* var;
 	size_t new_size;
-	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "remap");
 #ifdef USE_ITHREADS
@@ -537,16 +529,14 @@ remap(var, new_size)
 
 void
 unmap(var)
-	SV* var = deref_var(aTHX_ ST(0));
-	PROTOTYPE: \$
+	SV* var;
 	CODE: 
 		get_mmap_magic(aTHX_ var, "unmap");
 		sv_unmagic(var, PERL_MAGIC_uvar);
 
 void
 pin(var)
-	SV* var = deref_var(aTHX_ ST(0));
-	PROTOTYPE: \$
+	SV* var;
 	CODE: 
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "pin");
 		IGNORE_EMPTY_MAP(info);
@@ -555,8 +545,7 @@ pin(var)
 
 void
 unpin(var)
-	SV* var = deref_var(aTHX_ ST(0));
-	PROTOTYPE: \$
+	SV* var;
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "unpin");
 		IGNORE_EMPTY_MAP(info);
@@ -565,9 +554,8 @@ unpin(var)
 
 void
 advise(var, name)
-	SV* var = deref_var(aTHX_ ST(0));
+	SV* var;
 	SV* name;
-	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
 		IGNORE_EMPTY_MAP(info);
@@ -582,9 +570,8 @@ advise(var, name)
 
 void
 protect(var, prot)
-	SV* var = deref_var(aTHX_ ST(0));
+	SV* var;
 	SV* prot;
-	PROTOTYPE: \$@
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
 		int prot_val = protection_value(prot);
@@ -597,8 +584,7 @@ protect(var, prot)
 
 void
 lock_map(var)
-	SV* var = deref_var(aTHX_ ST(0));
-	PROTOTYPE: \$
+	SV* var;
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "lock_map");
 #ifdef USE_ITHREADS
@@ -613,8 +599,8 @@ lock_map(var)
 void
 wait_until(block, var)
 	SV* block;
-	SV* var = deref_var(aTHX_ ST(1));
-	PROTOTYPE: &\$
+	SV* var;
+	PROTOTYPE: &@
 	PPCODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "wait_until");
 		if (info->owner != aTHX)
@@ -633,8 +619,7 @@ wait_until(block, var)
 
 void
 notify(var)
-	SV* var = deref_var(aTHX_ ST(0));
-	PROTOTYPE: \$
+	SV* var;
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "notify");
 		if (info->owner != aTHX)
@@ -643,8 +628,7 @@ notify(var)
 
 void
 broadcast(var)
-	SV* var = deref_var(aTHX_ ST(0));
-	PROTOTYPE: \$
+	SV* var;
 	CODE:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "broadcast");
 		if (info->owner != aTHX)
