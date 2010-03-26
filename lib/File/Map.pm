@@ -358,9 +358,9 @@ This module does not have any dependencies on non-standard modules.
 
 =head1 PITFALLS
 
-You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults (confusingly, it will work on some others like x86).
+On perl versions lower than 5.11.5 many string functions are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=62646>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you need to do this, I can only recommend upgrading to 5.12.
 
-On perl versions lower than 5.11.5 C<substr>, C<length> and C<pos> are limited to 32bit logic, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB.
+You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
 =head1 BUGS AND LIMITATIONS
 
