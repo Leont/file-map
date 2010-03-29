@@ -1,6 +1,6 @@
 package File::Map;
 
-# This software is copyright (c) 2008, 2009 by Leon Timmermans <leont@cpan.org>.
+# This software is copyright (c) 2008, 2009, 2010 by Leon Timmermans <leont@cpan.org>.
 #
 # This is free software; you can redistribute it and/or modify it under
 # the same terms as perl itself.
@@ -34,6 +34,8 @@ while (my ($category, $functions) = each %export_data) {
 		push @{ $EXPORT_TAGS{$category} }, $function;
 	}
 }
+
+@{ $EXPORT_TAGS{all} } = @EXPORT_OK;
 
 Readonly our %PROTECTION_FOR => (
 	'<'  => PROT_READ,
@@ -152,17 +154,15 @@ It has built-in support for thread synchronization.
 
 =head1 FUNCTIONS
 
-All functions take an lvalue as their first argument. This first argument has a prototype of C<\$>, B<be aware that this may change in a future release>.
-
 =head2 Mapping
 
 The following functions for mapping a variable are available for exportation.
 
 =over 4
 
-=item * map_handle $lvalue, *filehandle, $mode = '<', $offset = 0, $length = -s(*handle) - $offset
+=item * map_handle $lvalue, $filehandle, $mode = '<', $offset = 0, $length = -s(*handle) - $offset
 
-Use a filehandle to map into an lvalue. *filehandle may be a bareword, constant, scalar expression, typeglob, or a reference to a typeglob. $mode uses the same format as C<open> does (it currently accepts C<< < >>, C<< +< >>, C<< > >> and C<< +> >>). $offset and $length are byte positions in the file, and default to mapping the whole file.
+Use a filehandle to map into an lvalue. $filehandle should be a scalar filehandle. $mode uses the same format as C<open> does (it currently accepts C<< < >>, C<< +< >>, C<< > >> and C<< +> >>). $offset and $length are byte positions in the file, and default to mapping the whole file.
 
 =item * map_file $lvalue, $filename, $mode = '<', $offset = 0, $length = -s($filename) - $offset
 
@@ -172,17 +172,17 @@ Open a file and map it into an lvalue. Other than $filename, all arguments work 
 
 Map an anonymous piece of memory.
 
-=item * sys_map $lvalue, $length, $protection, $flags, *filehandle, $offset = 0
+=item * sys_map $lvalue, $length, $protection, $flags, $filehandle, $offset = 0
 
-Low level map operation. It accepts the same constants as map does (except its first argument obviously). If you don't know how mmap works you probably shouldn't be using this.
+Low level map operation. It accepts the same constants as mmap does (except its first argument obviously). If you don't know how mmap works you probably shouldn't be using this.
 
 =item * unmap $lvalue
 
-Unmap a variable. Note that normally this is not necessary, but it is included for completeness.
+Unmap a variable. Note that normally this is not necessary as variables are unmapped automatically at destruction, but it is included for completeness.
 
 =item * remap $lvalue, $new_size
 
-Try to remap $lvalue to a new size. It may fail if there is not sufficient space to expand a mapping at its current location. This call is linux specific and currently not supported on other systems.
+Try to remap $lvalue to a new size. It may fail if there is not sufficient space to expand a mapping at its current location. This call is linux specific and not supported on other systems.
 
 =back
 
@@ -293,6 +293,10 @@ lock_map, wait_until, notify, broadcast
 =item * :constants
 
 PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_ANONYMOUS, MAP_SHARED, MAP_PRIVATE, MAP_ANON, MAP_FILE
+
+=item * :all
+
+All functions defined in this module.
 
 =back
 
