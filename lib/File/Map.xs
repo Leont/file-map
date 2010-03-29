@@ -171,8 +171,9 @@ static void real_croak_pv(pTHX_ const char* value) {
 
 static void croak_sys(pTHX_ const char* format) {
 	char buffer[128];
+	SV* tmp;
 	get_sys_error(buffer, sizeof buffer);
-	SV* const tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
+	tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
 	real_croak_sv(aTHX_ tmp);
 }
 
@@ -311,12 +312,15 @@ static void check_new_variable(pTHX_ SV* var) {
 static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t offset) {
 	void* address;
 #ifdef WIN32
+	HANDLE file;
+	HANDLE mapping;
+	DWORD viewflag;
 	prot &= PROT_ALL;
-	HANDLE file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
-	HANDLE mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, 0, length, NULL);
+	file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
+	mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, 0, length, NULL);
 	if (mapping == NULL)
 		croak_sys(aTHX_ "Could not map: %s");
-	DWORD viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot | PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
+	viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot | PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
 	address = MapViewOfFile(mapping, viewflag, 0, offset, length);
 	CloseHandle(mapping);
 	if (address == NULL)
@@ -332,7 +336,7 @@ static struct mmap_info* initialize_mmap_info(void* address, size_t length, ptrd
 	struct mmap_info* magical;
 	New(0, magical, 1, struct mmap_info);
 	magical->real_address = address;
-	magical->fake_address = address + correction;
+	magical->fake_address = (char*)address + correction;
 	magical->real_length = length + correction;
 	magical->fake_length = length;
 #ifdef USE_ITHREADS
@@ -405,15 +409,13 @@ static int _protection_value(pTHX_ SV* prot) {
 		XSRETURN_EMPTY;\
 	} STMT_END
 
-MODULE = File::Map				PACKAGE = File::Map
-
-PROTOTYPES: DISABLED
-
-BOOT:
+static boot(pTHX) {
 	AV* constants = newAV();
-	hv_store(get_hv("File::Map::EXPORT_TAGS", TRUE), "constants", 9, newRV_inc((SV*) constants), 0);
 	AV* export_ok = get_av("File::Map::EXPORT_OK", TRUE);
 	HV* stash = get_hv("File::Map::", FALSE);
+	HV* advise_constants = newHV();
+
+	hv_store(get_hv("File::Map::EXPORT_TAGS", TRUE), "constants", 9, newRV_inc((SV*) constants), 0);
 	MAP_CONSTANT(PROT_NONE);
 	MAP_CONSTANT(PROT_READ);
 	MAP_CONSTANT(PROT_WRITE);
@@ -425,7 +427,6 @@ BOOT:
 	MAP_CONSTANT(MAP_FILE);
 	/**/
 	
-	HV* advise_constants = newHV();
 	hv_store(PL_modglobal, "File::Map::ADVISE_CONSTANTS", 27, (SV*)advise_constants, 0);
 	ADVISE_CONSTANT("normal", MADV_NORMAL);
 	ADVISE_CONSTANT("random", MADV_RANDOM);
@@ -465,6 +466,14 @@ BOOT:
 #ifdef MADV_SPACEAVAIL
 	ADVISE_CONSTANT("spaceavail", MADV_SPACEAVAIL);
 #endif
+}
+
+MODULE = File::Map				PACKAGE = File::Map
+
+PROTOTYPES: DISABLED
+
+BOOT:
+    boot(aTHX);
 
 void
 _mmap_impl(var, length, prot, flags, fd, offset)
@@ -486,11 +495,12 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE);
 		}
 		else {
+			struct mmap_info* magical;
 			if (!is_stattable(fd))
 				real_croak_pv(aTHX_ "Could not map: handle doesn't refer to a file");
 			sv_setpvn(var, "", 0);
 
-			struct mmap_info* magical = initialize_mmap_info(SvPV_nolen(var), 0, 0);
+			magical = initialize_mmap_info(SvPV_nolen(var), 0, 0);
 			reset_var(var, magical, SvCUR(var));
 			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE);
 		}
@@ -499,8 +509,9 @@ void
 sync(var, sync = YES)
 	SV* var;
 	SV* sync;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
+	CODE:
 		IGNORE_EMPTY_MAP(info);
 		if (SvREADONLY(var) && ckWARN(WARN_IO))
 			Perl_warn(aTHX_ "Syncing a readonly map makes no sense");
@@ -512,8 +523,9 @@ void
 remap(var, new_size)
 	SV* var;
 	size_t new_size;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "remap");
+	CODE:
 #ifdef USE_ITHREADS
 		if (info->count != 1)
 			Perl_croak(aTHX_ "Can't remap a shared mapping");
@@ -537,8 +549,9 @@ unmap(var)
 void
 pin(var)
 	SV* var;
-	CODE: 
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "pin");
+	CODE:
 		IGNORE_EMPTY_MAP(info);
 		if (mlock(info->real_address, info->real_length) == -1)
 			die_sys(aTHX_ "Could not pin: %s");
@@ -546,8 +559,9 @@ pin(var)
 void
 unpin(var)
 	SV* var;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "unpin");
+	CODE:
 		IGNORE_EMPTY_MAP(info);
 		if (munlock(info->real_address, info->real_length) == -1)
 			die_sys(aTHX_ "Could not unpin: %s");
@@ -556,11 +570,12 @@ void
 advise(var, name)
 	SV* var;
 	SV* name;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
-		IGNORE_EMPTY_MAP(info);
 		HV* constants = (HV*) *hv_fetch(PL_modglobal, "File::Map::ADVISE_CONSTANTS", 27, 0);
 		HE* value = hv_fetch_ent(constants, name, 0, 0);
+	CODE:
+		IGNORE_EMPTY_MAP(info);
 		if (!value) {
 			if (ckWARN(WARN_PORTABLE))
 				Perl_warn(aTHX_ "Unknown advice '%s'", SvPV_nolen(name));
@@ -572,9 +587,10 @@ void
 protect(var, prot)
 	SV* var;
 	SV* prot;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
 		int prot_val = protection_value(prot);
+	CODE:
 		if (!EMPTY_MAP(info))
 			mprotect(info->real_address, info->real_length, prot_val);
 		if (prot_val & PROT_WRITE)
@@ -585,8 +601,9 @@ protect(var, prot)
 void
 lock_map(var)
 	SV* var;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "lock_map");
+	CODE:
 #ifdef USE_ITHREADS
 		LEAVE;
 		SAVEDESTRUCTOR_X(magic_end, info);
@@ -601,8 +618,9 @@ wait_until(block, var)
 	SV* block;
 	SV* var;
 	PROTOTYPE: &@
-	PPCODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "wait_until");
+	PPCODE:
 		if (info->owner != aTHX)
 			Perl_croak(aTHX_ "Trying to wait on an unlocked map");
 		SAVESPTR(DEFSV);
@@ -620,8 +638,9 @@ wait_until(block, var)
 void
 notify(var)
 	SV* var;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "notify");
+	CODE:
 		if (info->owner != aTHX)
 			Perl_croak(aTHX_ "Trying to notify on an unlocked map");
 		COND_SIGNAL(&info->cond);
@@ -629,8 +648,9 @@ notify(var)
 void
 broadcast(var)
 	SV* var;
-	CODE:
+	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "broadcast");
+	CODE:
 		if (info->owner != aTHX)
 			Perl_croak(aTHX_ "Trying to broadcast on an unlocked map");
 		COND_BROADCAST(&info->cond);
