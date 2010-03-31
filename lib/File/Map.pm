@@ -13,6 +13,7 @@ use Exporter 5.57 'import';
 use XSLoader;
 use Carp qw/croak/;
 use Readonly 1.03;
+use PerlIO;
 
 our (@EXPORT_OK, %EXPORT_TAGS);
 
@@ -44,12 +45,23 @@ Readonly our %PROTECTION_FOR => (
 	'+>' => PROT_READ | PROT_WRITE,
 );
 
-Readonly my $ANON_FH, -1;
+Readonly my $ANON_FH => -1;
+
+Readonly my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap/;
+
+sub _check_layers {
+	my $fh = shift;
+	for my $layer (PerlIO::get_layers($fh)) {
+		croak "Can't mmap not binary filehandle: layer '$layer' is not binary" if not $is_binary{$layer};
+	}
+	return;
+}
 
 ## no critic (Subroutines::RequireArgUnpacking)
 
 sub map_handle {
 	my (undef, $fh, $mode, $offset, $length) = @_;
+	_check_layers($fh);
 	$offset ||= 0;
 	$length ||= (-s $fh) - $offset;
 	_mmap_impl($_[0], $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
@@ -60,7 +72,7 @@ sub map_file {
 	my (undef, $filename, $mode, $offset, $length) = @_;
 	$mode   ||= '<';
 	$offset ||= 0;
-	open my $fh, $mode, $filename or croak "Couldn't open file $filename: $!";
+	open my $fh, "$mode:raw", $filename or croak "Couldn't open file $filename: $!";
 	$length ||= (-s $fh) - $offset;
 	_mmap_impl($_[0], $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
@@ -76,6 +88,7 @@ sub map_anonymous {
 
 sub sys_map {    ## no critic (ProhibitManyArgs)
 	my (undef, $length, $protection, $flags, $fh, $offset) = @_;
+	_check_layers($fh);
 	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : $fh;
 	$offset ||= 0;
 	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset);
@@ -328,6 +341,10 @@ A zero length anonymous map is not possible (or in any way useful).
 
 An attempts was made to remap a mapping that is shared among different threads, this is not possible.
 
+=item * "Can't mmap not binary filehandle: layer '%s' is not binary"
+
+You tried to to map a filehandle that has some encoding layer. This is not supported by File::Map.
+
 =back
 
 =head2 Warnings
@@ -363,6 +380,8 @@ This module does not have any dependencies on non-standard modules.
 =head1 PITFALLS
 
 On perl versions lower than 5.11.5 many string functions are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=62646>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you need to do this, I can only recommend upgrading to 5.12.
+
+This module assumes the file is binary data, and doesn't do any encoding or decoding. You will have to do this manually. You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> though, if you know what you're doing.
 
 You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
