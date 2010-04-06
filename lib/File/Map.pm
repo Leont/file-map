@@ -381,7 +381,7 @@ This module does not have any dependencies on non-standard modules.
 
 On perl versions lower than 5.11.5 many string functions are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=62646>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you need to do this, I can only recommend upgrading to 5.12.
 
-This module assumes the file is binary data, and doesn't do any encoding or decoding. You will have to do this manually. You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> though, if you know what you're doing.
+This module assumes the file is binary data, and doesn't do any encoding or decoding. You will have to do this manually. You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> if it's valid utf-8, but writing to it requires you to really know what you're doing.
 
 You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
