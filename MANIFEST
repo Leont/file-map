@@ -9,11 +9,11 @@ META.yml			A computer readable description of this distribution
 README				A file explaning what this module does, and how to build it
 t/00-load.t			A test checking if the module loads at all
 t/10-basics.t			Unit tests for the main mapping functionality
-t/10-empty.t
+t/10-empty.t			Unit tests for zero-sized file maps
 t/20-errors.t			Unit tests for erroneous situations
-t/20-protect.t
+t/20-protect.t			Unit tests for protect()
 t/20-threads.t			Unit tests for the thread synchronization functions
+t/20-unicode.t			Unit tests for unicode semantics
 t/pod-coverage.t		A test checking documentation coverage
 t/pod.t				A test doing pod validation
-TODO				A list of things that can/should be done in the future
 typemap				A typemap for off_t
