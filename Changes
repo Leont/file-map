@@ -1,5 +1,13 @@
 Revision history for File-Map
 
+0.24    2010-04-12
+        *Removed almost all prototypes*
+        Made code C89 compliant to support MS VC++ (Jan Dubois)
+        Throw an exception if non-binary PerlIO layers are used.
+        Documentation updates
+        Added tests for unicode
+        Possibly fix a warning on readonly variables
+
 0.23    2010-02-14
         Blocked remap from remapping when a variable is shared among threads
         Disabled madvise on cygwin
