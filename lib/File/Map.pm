@@ -10,15 +10,15 @@ use strict;
 use warnings FATAL => 'all';
 
 use Exporter 5.57 'import';
-use XSLoader;
+use XSLoader ();
 use Carp qw/croak/;
 use Readonly 1.03;
-use PerlIO;
+use PerlIO ();
 
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.24';
+	our $VERSION = '0.25';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -105,7 +105,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.24
+Version 0.25
 
 =head1 SYNOPSIS
 
@@ -157,7 +157,7 @@ It offers a simple interface targeted at common usage patterns
 
 =item * Portability
 
-File::Map supports Unix, VMS and Windows.
+File::Map supports Unix, Windows and VMS.
 
 =item * Thread synchronization
 
@@ -297,7 +297,7 @@ map_handle, map_file, map_anonymous, sys_map, unmap
 
 =item * :extra
 
-remap, sync, pin, unpin, advise
+remap, sync, pin, unpin, advise, protect
 
 =item * :lock
 
@@ -375,13 +375,21 @@ Overwriting an empty map is rather nonsensical, hence a warning is given when th
 
 =head1 DEPENDENCIES
 
-This module does not have any dependencies on non-standard modules.
+This module depends on perl 5.8 and L<Readonly>.
 
 =head1 PITFALLS
 
-On perl versions lower than 5.11.5 many string functions are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=62646>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you need to do this, I can only recommend upgrading to 5.12.
+On perl versions lower than 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, I strongly recommend upgrading to 5.12.
 
-This module assumes the file is binary data, and doesn't do any encoding or decoding. You will have to do this manually. You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> if it's valid utf-8, but writing to it requires you to really know what you're doing.
+This module assumes the file is binary data and doesn't do any encoding or newline transformation for you. Most importantly this means that:
+
+=over 2
+
+=item * On Windows, you have to remember to make your filehandles binary before passing them to C<map_handle> or C<sys_map>. They will not accept a C<crlf> filehandle as it would return a different value than reading it normally would. This can be done using open modes or L<binmode>, see L<PerlIO> for more information.
+
+=item * You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> if it's valid utf-8, but writing to it requires you to really know what you're doing. Currently C<utf8> filehandles are not accepted, though a future version may deal wit them more gracefully.
+
+=back
 
 You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 

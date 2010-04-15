@@ -8,7 +8,7 @@ use Test::More tests => 20;
 use Test::Warn;
 use Test::Exception;
 
-open my $self, '<', $0 or die "Couldn't open self: $!";
+open my $self, '<:raw', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };
 
 {
@@ -33,7 +33,7 @@ close $self or die "Couldn't close self: $!";
 	lives_ok { unmap($mmaped) } "Unmapping";
 }
 
-open my $copy, "+<", undef or die "Couldn't create tempfile: $!";
+open my $copy, "+<:raw", undef or die "Couldn't create tempfile: $!";
 $copy->autoflush(1);
 print $copy $slurped;
 

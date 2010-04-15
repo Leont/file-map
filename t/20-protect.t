@@ -8,7 +8,7 @@ use IO::Handle;
 use Test::Exception;
 use POSIX qw/SIGSEGV/;
 
-open my $copy, "+<", undef or die "Couldn't create tempfile: $!";
+open my $copy, "+<:raw", undef or die "Couldn't create tempfile: $!";
 $copy->autoflush(1);
 print $copy "0123456789"x10;
 

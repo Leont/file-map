@@ -9,12 +9,12 @@ use Test::Warn;
 use Test::Exception;
 
 
-open my $fh, '+<', undef;
+open my $fh, '+<:raw', undef;
 
 {
 	my $mmaped;
 
-	lives_ok { map_handle($mmaped, $fh) } "map succeeded";
+	lives_ok { map_handle $mmaped, $fh } "map succeeded";
 	ok(defined $mmaped,                   "mmaped is defined");
 	ok( length $mmaped == 0,              "length of mmaped is big enough");
 	ok($mmaped eq "",                     "mmaped eq \"\"");
