@@ -304,9 +304,12 @@ static void check_new_variable(pTHX_ SV* var) {
 		Perl_croak(aTHX_ PL_no_modify);
 	if (SvMAGICAL(var) && mg_find(var, PERL_MAGIC_uvar))
 		sv_unmagic(var, PERL_MAGIC_uvar);
+	if (SvROK(var))
+		sv_unref_flags(var, SV_IMMEDIATE_UNREF);
 	if (SvPOK(var)) 
 		SvPV_free(var);
-	sv_upgrade(var, SVt_PVMG);
+	if (SvTYPE(var) < SVt_PVMG)
+		sv_upgrade(var, SVt_PVMG);
 }
 
 static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t offset) {
