@@ -1,5 +1,15 @@
 Revision history for File-Map
 
+0.26    2010-04-20
+        Fixed RT#56644 (mmap turning ref into map)
+        Fixed RT#56645 (mmap on hash or array entry)
+        Fixed RT#56649 (negative offset segv)
+        Made offset an UV, eleviating RT#56646 a little
+
+0.25    2010-04-15
+        Fixed regression in unit tests on Windows
+        Minor documentation fixes
+
 0.24    2010-04-12
         *Removed almost all prototypes*
         Made code C89 compliant to support MS VC++ (Jan Dubois)
