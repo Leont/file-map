@@ -57,13 +57,23 @@ sub _check_layers {
 	return;
 }
 
+sub _get_offset_length {
+	my ($offset, $length, $fh) = @_;
+
+	my $size = -s $fh;
+	$offset ||= 0;
+	$length ||= $size - $offset;
+	my $end = $offset + $length;
+	croak "Window ($offset,$end) is outside the file" if $offset < 0 or $end > $size and not -c _;
+	return ($offset, $length);
+}
+
 ## no critic (Subroutines::RequireArgUnpacking)
 
 sub map_handle {
 	my (undef, $fh, $mode, $offset, $length) = @_;
 	_check_layers($fh);
-	$offset ||= 0;
-	$length ||= (-s $fh) - $offset;
+	($offset, $length) = _get_offset_length($offset, $length, $fh);
 	_mmap_impl($_[0], $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	return;
 }
@@ -71,9 +81,8 @@ sub map_handle {
 sub map_file {
 	my (undef, $filename, $mode, $offset, $length) = @_;
 	$mode   ||= '<';
-	$offset ||= 0;
 	open my $fh, "$mode:raw", $filename or croak "Couldn't open file $filename: $!";
-	$length ||= (-s $fh) - $offset;
+	($offset, $length) = _get_offset_length($offset, $length, $fh);
 	_mmap_impl($_[0], $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
@@ -341,9 +350,13 @@ A zero length anonymous map is not possible (or in any way useful).
 
 An attempts was made to remap a mapping that is shared among different threads, this is not possible.
 
-=item * "Can't mmap not binary filehandle: layer '%s' is not binary"
+=item * Can't mmap not binary filehandle: layer '%s' is not binary
 
 You tried to to map a filehandle that has some encoding layer. This is not supported by File::Map.
+
+=item * Window ($start, $end) is outside the file
+
+The offset and/or length you specified were invalid for this file.
 
 =back
 
