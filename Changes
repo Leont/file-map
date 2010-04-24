@@ -1,5 +1,8 @@
 Revision history for File-Map
 
+0.27    2010-04-25
+        Allow crlf as a binary layer for now, until a proper check has been developed
+
 0.26    2010-04-20
         Fixed RT#56644 (mmap turning ref into map)
         Fixed RT#56645 (mmap on hash or array entry)

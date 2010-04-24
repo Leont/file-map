@@ -18,7 +18,7 @@ use PerlIO ();
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.26';
+	our $VERSION = '0.27';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -47,7 +47,7 @@ Readonly our %PROTECTION_FOR => (
 
 Readonly my $ANON_FH => -1;
 
-Readonly my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap/;
+Readonly my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap crlf/;    # crlf can be binary, this needs a better check
 
 sub _check_layers {
 	my $fh = shift;
@@ -80,7 +80,7 @@ sub map_handle {
 
 sub map_file {
 	my (undef, $filename, $mode, $offset, $length) = @_;
-	$mode   ||= '<';
+	$mode ||= '<';
 	open my $fh, "$mode:raw", $filename or croak "Couldn't open file $filename: $!";
 	($offset, $length) = _get_offset_length($offset, $length, $fh);
 	_mmap_impl($_[0], $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
@@ -114,7 +114,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.26
+Version 0.27
 
 =head1 SYNOPSIS
 
