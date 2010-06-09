@@ -39,8 +39,6 @@ Advantages of this module over other similar modules
  Thread synchronization
   It has built-in support for thread synchronization.
 
-This is an early release. There are likely to be bugs. Also I can't guarantee API stability yet.
-
 INSTALLATION
 
 To install this module, run the following commands:

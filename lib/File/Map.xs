@@ -490,6 +490,8 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 		
 		if (length) {
 			ptrdiff_t correction = offset % page_size();
+			if (length > ULONG_MAX - correction)
+				real_croak_pv(aTHX_ "Can't map: length + offset overflows");
 			void* address = do_mapping(aTHX_ length + correction, prot, flags, fd, offset - correction);
 			
 			struct mmap_info* magical = initialize_mmap_info(address, length, correction);

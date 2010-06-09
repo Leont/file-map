@@ -26,6 +26,9 @@ my $builder = Module::Build->new(
 		Readonly       => 1.03,
 		Exporter       => 5.57,
 	},
+	suggests => {
+		perl           => 5.012,
+	},
 	meta_merge => {
 		resources      => {
 			bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map',
