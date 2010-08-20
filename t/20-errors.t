@@ -19,7 +19,7 @@ substr $mmaped, 0, length $mmaped, $slurped;
 
 is $mmaped, $slurped, '$slurped an $mmaped are equal';
 
-warnings_like { $mmaped = reverse $mmaped } [ qr/^Writing directly to a to a memory mapped file is not recommended at /, qr/^Truncating new value to size of the memory map at /], 'Reversing should give a warning';
+warnings_like { $mmaped = reverse $mmaped } [ qr/^Writing directly to a memory mapped file is not recommended at /, qr/^Truncating new value to size of the memory map at /], 'Reversing should give a warning';
 
 is($mmaped, scalar reverse($slurped), '$mmap is reversed');
 
@@ -32,7 +32,7 @@ warning_is { $mmaped = $mmaped } undef, 'No warnings on self-assignment';
 
 dies_ok { map_file my $var, 'some-nonexistant-file' } 'Can\'t map non-existant files as readonly';
 
-warnings_like { $mmaped =~ s/(.)/$1$1/ } [ qr/^Writing directly to a to a memory mapped file is not recommended at /, qr/^Truncating new value to size of the memory map at /], 'Trying to make it longer gives warnings';
+warnings_like { $mmaped =~ s/(.)/$1$1/ } [ qr/^Writing directly to a memory mapped file is not recommended at /, qr/^Truncating new value to size of the memory map at /], 'Trying to make it longer gives warnings';
 
 warning_is { $slurped =~ tr/r/t/ } undef, 'Translation shouldn\'t cause warnings';
 
@@ -54,12 +54,12 @@ SKIP: {
 warning_is { advise $mmaped, 'sequential' } undef, 'advice $mmaped, \'readahead\'';
 warning_like { advise $mmaped, 'non-existent' } qr/^Unknown advice 'non-existent' at /, 'advice $mmaped, \'non-existent\'';
 
-warning_like { $mmaped = "foo" } qr/^Writing directly to a to a memory mapped file is not recommended at /, 'Trying to make it shorter gives a warning';
+warning_like { $mmaped = "foo" } qr/^Writing directly to a memory mapped file is not recommended at /, 'Trying to make it shorter gives a warning';
 
 is(length $mmaped, length $slurped, '$mmaped and $slurped still have the same length');
 
-warnings_like { $mmaped = "foobar" } [ qr/^Writing directly to a to a memory mapped file is not recommended at /], 'Cutting should give a warning';
+warnings_like { $mmaped = "foobar" } [ qr/^Writing directly to a memory mapped file is not recommended at /], 'Cutting should give a warning';
 
-warnings_like { $mmaped = 1 } [ qr/^Writing directly to a to a memory mapped file is not recommended at /], 'Cutting should give a warning for numbers too';
+warnings_like { $mmaped = 1 } [ qr/^Writing directly to a memory mapped file is not recommended at /], 'Cutting should give a warning for numbers too';
 
 throws_ok { map_file my $str, $0, '<', -1, 100; $str =~ tr/a// } qr/^Window \(-?\d+,-?\d+\) is outside the file /, 'negative offsets give an error';

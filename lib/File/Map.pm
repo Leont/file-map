@@ -364,7 +364,7 @@ The offset and/or length you specified were invalid for this file.
 
 =over 4
 
-=item * Writing directly to a to a memory mapped file is not recommended
+=item * Writing directly to a memory mapped file is not recommended
 
 Due to the way perl works internally, it's not possible to write a mapping implementation that allows direct assignment yet performs well. As a compromise, File::Map is capable of fixing up the mess if you do it nonetheless, but it will warn you that you're doing something you shouldn't. This warning is only given when C<use warnings 'substr'> is in effect.
 
