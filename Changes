@@ -1,5 +1,13 @@
 Revision history for File-Map
 
+0.28    2010-08-25
+        Made truncation warning do the right thing, unbreaking it on 5.13.3+ (fixes RT#60710)
+        Allocate mmap_info in a thread safe manner, preventing a weird class of bugs.
+        Removed threads.pm from dependency list (fixes RT#60708)
+        Fixed length wrap around bug (RT#56643)
+        Added an example: fastsearch
+        Suggest to use 5.12 for less buggy behavior on large strings
+
 0.27    2010-04-25
         Allow crlf as a binary layer for now, until a proper check has been developed
 
