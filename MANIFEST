@@ -7,6 +7,7 @@ Makefile.PL            A passthrough builder for Module::Build
 MANIFEST               This list of files
 META.yml               A computer readable description of this distribution
 README                 A file explaning what this module does, and how to build it
+examples/fastsearch.pl An example of a use case for this module
 t/00-load.t            A test checking if the module loads at all
 t/10-basics.t          Unit tests for the main mapping functionality
 t/10-empty.t           Unit tests for zero-sized file maps
