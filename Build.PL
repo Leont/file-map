@@ -19,7 +19,6 @@ my $builder = Module::Build->new(
 		'Test::More'   => 0,
 		'Test::Warn'   => 0,
 		'Time::HiRes'  => 0,
-		threads        => 0,
 	},
 	requires => {
 		perl           => 5.008,
