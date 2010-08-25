@@ -266,13 +266,13 @@ static int empty_free(pTHX_ SV* var, MAGIC* magic) {
 		MUTEX_DESTROY(&info->data_mutex);
 		MUTEX_UNLOCK(&info->count_mutex);
 		MUTEX_DESTROY(&info->count_mutex);
-		Safefree(info);
+		PerlMemShared_free(info);
 	}
 	else {
 		MUTEX_UNLOCK(&info->count_mutex);
 	}
 #else
-	Safefree(info);
+	PerlMemShared_free(info);
 #endif 
 	SvREADONLY_off(var);
 	SvPV_free(var);
