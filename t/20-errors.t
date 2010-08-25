@@ -5,7 +5,7 @@ use warnings;
 use bytes;
 
 use File::Map qw/:map lock_map sync advise/;
-use Test::More tests => 22;
+use Test::More tests => 21;
 use Test::Warn;
 use Test::Exception;
 
@@ -19,7 +19,7 @@ substr $mmaped, 0, length $mmaped, $slurped;
 
 is $mmaped, $slurped, '$slurped an $mmaped are equal';
 
-warnings_like { $mmaped = reverse $mmaped } [ qr/^Writing directly to a memory mapped file is not recommended at /, qr/^Truncating new value to size of the memory map at /], 'Reversing should give a warning';
+warning_like { $mmaped = reverse $mmaped } qr/^Writing directly to a memory mapped file is not recommended at /, 'Reversing should give a warning';
 
 is($mmaped, scalar reverse($slurped), '$mmap is reversed');
 
@@ -58,8 +58,6 @@ warning_like { $mmaped = "foo" } qr/^Writing directly to a memory mapped file is
 
 is(length $mmaped, length $slurped, '$mmaped and $slurped still have the same length');
 
-warnings_like { $mmaped = "foobar" } [ qr/^Writing directly to a memory mapped file is not recommended at /], 'Cutting should give a warning';
-
-warnings_like { $mmaped = 1 } [ qr/^Writing directly to a memory mapped file is not recommended at /], 'Cutting should give a warning for numbers too';
+warning_like { $mmaped = 1 } qr/^Writing directly to a memory mapped file is not recommended at /, 'Cutting should give a warning for numbers too';
 
 throws_ok { map_file my $str, $0, '<', -1, 100; $str =~ tr/a// } qr/^Window \(-?\d+,-?\d+\) is outside the file /, 'negative offsets give an error';

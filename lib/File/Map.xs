@@ -189,7 +189,7 @@ static void reset_var(SV* var, struct mmap_info* info, size_t length) {
 static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string, STRLEN len) {
 	if (ckWARN(WARN_SUBSTR)) {
 		Perl_warn(aTHX_ "Writing directly to a memory mapped file is not recommended");
-		if (SvCUR(var) >= info->fake_length)
+		if (SvCUR(var) > info->fake_length)
 			Perl_warn(aTHX_ "Truncating new value to size of the memory map");
 	}
 
@@ -209,7 +209,7 @@ static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 		mmap_fixup(aTHX_ var, info, string, len);
 	}
 	else if (SvPVX(var) != info->fake_address)
-		mmap_fixup(aTHX_ var, info, SvPVX(var), SvLEN(var) - 1);
+		mmap_fixup(aTHX_ var, info, SvPVX(var), SvCUR(var));
 	return 0;
 }
 

@@ -18,7 +18,7 @@ use PerlIO ();
 our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
-	our $VERSION = '0.28';
+	our $VERSION = '0.29';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -114,7 +114,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.28
+Version 0.29
 
 =head1 SYNOPSIS
 

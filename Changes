@@ -1,5 +1,8 @@
 Revision history for File-Map
 
+0.29    2010-08-25
+        More fixing related to RT#60710
+
 0.28    2010-08-25
         Made truncation warning do the right thing, unbreaking it on 5.13.3+ (fixes RT#60710)
         Allocate mmap_info in a thread safe manner, preventing a weird class of bugs.
