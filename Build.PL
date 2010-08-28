@@ -22,7 +22,7 @@ my $builder = Module::Build->new(
 	},
 	requires => {
 		perl           => 5.008,
-		Readonly       => 1.03,
+		'Const::Fast'  => 0,
 		Exporter       => 5.57,
 	},
 	suggests => {

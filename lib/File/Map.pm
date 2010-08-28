@@ -12,7 +12,7 @@ use warnings FATAL => 'all';
 use Exporter 5.57 'import';
 use XSLoader ();
 use Carp qw/croak/;
-use Readonly 1.03;
+use Const::Fast;
 use PerlIO ();
 
 our (@EXPORT_OK, %EXPORT_TAGS);
@@ -38,16 +38,16 @@ while (my ($category, $functions) = each %export_data) {
 
 @{ $EXPORT_TAGS{all} } = @EXPORT_OK;
 
-Readonly our %PROTECTION_FOR => (
+const our %PROTECTION_FOR => (
 	'<'  => PROT_READ,
 	'+<' => PROT_READ | PROT_WRITE,
 	'>'  => PROT_WRITE,
 	'+>' => PROT_READ | PROT_WRITE,
 );
 
-Readonly my $ANON_FH => -1;
+const my $ANON_FH => -1;
 
-Readonly my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap crlf/;    # crlf can be binary, this needs a better check
+const my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap crlf/;    # crlf can be binary, this needs a better check
 
 sub _check_layers {
 	my $fh = shift;
