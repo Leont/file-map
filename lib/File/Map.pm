@@ -9,13 +9,11 @@ use 5.008;
 use strict;
 use warnings FATAL => 'all';
 
-use Exporter 5.57 'import';
+use Sub::Exporter;
 use XSLoader ();
 use Carp qw/croak/;
 use Const::Fast;
 use PerlIO ();
-
-our (@EXPORT_OK, %EXPORT_TAGS);
 
 BEGIN {
 	our $VERSION = '0.29';
@@ -24,19 +22,24 @@ BEGIN {
 }
 
 my %export_data = (
-	'map'  => [qw/map_handle map_file map_anonymous unmap sys_map/],
-	extra  => [qw/remap sync pin unpin advise protect/],
-	'lock' => [qw/wait_until notify broadcast lock_map/],
+	'map'     => [qw/map_handle map_file map_anonymous unmap sys_map/],
+	extra     => [qw/remap sync pin unpin advise protect/],
+	'lock'    => [qw/wait_until notify broadcast lock_map/],
+	constants => [qw/PROT_NONE PROT_READ PROT_WRITE PROT_EXEC MAP_ANONYMOUS MAP_SHARED MAP_PRIVATE MAP_ANON MAP_FILE/]
 );
 
-while (my ($category, $functions) = each %export_data) {
-	for my $function (grep { defined &{$_} } @{$functions}) {
-		push @EXPORT_OK, $function;
-		push @{ $EXPORT_TAGS{$category} }, $function;
-	}
-}
+{
+	my (@export_ok, %export_tags);
 
-@{ $EXPORT_TAGS{all} } = @EXPORT_OK;
+	while (my ($category, $functions) = each %export_data) {
+		for my $function (grep { defined &{$_} } @{$functions}) {
+			push @export_ok, $function;
+			push @{ $export_tags{$category} }, $function;
+		}
+	}
+
+	Sub::Exporter::setup_exporter({ exports => \@export_ok, groups => \%export_tags});
+}
 
 const our %PROTECTION_FOR => (
 	'<'  => PROT_READ,

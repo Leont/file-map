@@ -397,11 +397,7 @@ static int _protection_value(pTHX_ SV* prot) {
 
 #define YES &PL_sv_yes
 
-#define MAP_CONSTANT(cons) STMT_START {\
-	newCONSTSUB(stash, #cons, newSVuv(cons));\
-	av_push(constants, newSVpv(#cons, 0));\
-	av_push(export_ok, newSVpv(#cons, 0));\
-} STMT_END
+#define MAP_CONSTANT(cons) newCONSTSUB(stash, #cons, newSVuv(cons))
 #define ADVISE_CONSTANT(key, value) hv_store(advise_constants, key, sizeof key - 1, newSVuv(value), 0)
 
 #define EMPTY_MAP(info) ((info)->real_length == 0)
@@ -413,11 +409,9 @@ static int _protection_value(pTHX_ SV* prot) {
 
 static boot(pTHX) {
 	AV* constants = newAV();
-	AV* export_ok = get_av("File::Map::EXPORT_OK", TRUE);
 	HV* stash = get_hv("File::Map::", FALSE);
 	HV* advise_constants = newHV();
 
-	hv_store(get_hv("File::Map::EXPORT_TAGS", TRUE), "constants", 9, newRV_inc((SV*) constants), 0);
 	MAP_CONSTANT(PROT_NONE);
 	MAP_CONSTANT(PROT_READ);
 	MAP_CONSTANT(PROT_WRITE);

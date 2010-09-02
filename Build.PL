@@ -23,7 +23,7 @@ my $builder = Module::Build->new(
 	requires => {
 		perl           => 5.008,
 		'Const::Fast'  => 0,
-		Exporter       => 5.57,
+		'Sub::Exporter'=> 0,
 	},
 	suggests => {
 		perl           => 5.012,
