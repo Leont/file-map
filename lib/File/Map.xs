@@ -193,7 +193,8 @@ static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string
 			Perl_warn(aTHX_ "Truncating new value to size of the memory map");
 	}
 
-	Copy(string, info->fake_address, MIN(len, info->fake_length), char);
+	if (string && len)
+		Copy(string, info->fake_address, MIN(len, info->fake_length), char);
 	if (SvROK(var))
 		sv_unref_flags(var, SV_IMMEDIATE_UNREF);
 	if (SvPOK(var))
@@ -203,7 +204,9 @@ static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string
 
 static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-	if (!SvPOK(var)) {
+	if (!SvOK(var))
+		mmap_fixup(aTHX_ var, info, NULL, 0);
+	else if (!SvPOK(var)) {
 		STRLEN len;
 		const char* string = SvPV(var, len);
 		mmap_fixup(aTHX_ var, info, string, len);

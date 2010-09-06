@@ -5,7 +5,7 @@ use warnings;
 use bytes;
 
 use File::Map qw/:map lock_map sync advise/;
-use Test::More tests => 21;
+use Test::More tests => 22;
 use Test::Warn;
 use Test::Exception;
 
@@ -61,3 +61,5 @@ is(length $mmaped, length $slurped, '$mmaped and $slurped still have the same le
 warning_like { $mmaped = 1 } qr/^Writing directly to a memory mapped file is not recommended at /, 'Cutting should give a warning for numbers too';
 
 throws_ok { map_file my $str, $0, '<', -1, 100; $str =~ tr/a// } qr/^Window \(-?\d+,-?\d+\) is outside the file /, 'negative offsets give an error';
+
+warnings_like { undef $mmaped } [ qr/^Writing directly to a memory mapped file is not recommended at/ ], 'Survives undefing';
