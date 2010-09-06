@@ -297,8 +297,17 @@ static int mmap_dup(pTHX_ MAGIC* magic, CLONE_PARAMS* param) {
 #define mmap_dup 0
 #endif
 
-static const MGVTBL mmap_table  = { 0, mmap_write,  0, mmap_clear, mmap_free,  0, mmap_dup };
-static const MGVTBL empty_table = { 0, empty_write, 0, mmap_clear, empty_free, 0, mmap_dup };
+#ifdef MGf_LOCAL
+static int mmap_local(pTHX_ SV* var, MAGIC* magic) {
+	Perl_croak(aTHX_ "Can't localize file map");
+}
+#define mmap_local_tail , mmap_local
+#else
+#define mmap_local_tail
+#endif
+
+static const MGVTBL mmap_table  = { 0, mmap_write,  0, mmap_clear, mmap_free,  0, mmap_dup mmap_local_tail };
+static const MGVTBL empty_table = { 0, empty_write, 0, mmap_clear, empty_free, 0, mmap_dup mmap_local_tail };
 
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
@@ -356,6 +365,7 @@ static struct mmap_info* initialize_mmap_info(void* address, size_t length, ptrd
 static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* table, int writable) {
 	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, table, (const char*) magical, 0);
 	magic->mg_private = MMAP_MAGIC_NUMBER;
+	magic->mg_flags |= MGf_LOCAL;
 #ifdef USE_ITHREADS
 	magic->mg_flags |= MGf_DUP;
 #endif

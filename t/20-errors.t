@@ -5,7 +5,7 @@ use warnings;
 use bytes;
 
 use File::Map qw/:map lock_map sync advise/;
-use Test::More tests => 22;
+use Test::More tests => 23;
 use Test::Warn;
 use Test::Exception;
 
@@ -63,3 +63,7 @@ warning_like { $mmaped = 1 } qr/^Writing directly to a memory mapped file is not
 throws_ok { map_file my $str, $0, '<', -1, 100; $str =~ tr/a// } qr/^Window \(-?\d+,-?\d+\) is outside the file /, 'negative offsets give an error';
 
 warnings_like { undef $mmaped } [ qr/^Writing directly to a memory mapped file is not recommended at/ ], 'Survives undefing';
+
+map_anonymous our $local, 1024;
+
+throws_ok { local $local } qr/^Can't localize file map at /, 'Localization throws an exception';
