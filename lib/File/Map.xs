@@ -347,7 +347,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t 
 	return address;
 }
 
-static struct mmap_info* initialize_mmap_info(void* address, size_t length, ptrdiff_t correction) {
+static struct mmap_info* initialize_mmap_info(pTHX_ void* address, size_t length, ptrdiff_t correction) {
 	struct mmap_info* magical = PerlMemShared_malloc(sizeof *magical);
 	magical->real_address = address;
 	magical->fake_address = (char*)address + correction;
@@ -501,7 +501,7 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 				real_croak_pv(aTHX_ "Can't map: length + offset overflows");
 			void* address = do_mapping(aTHX_ length + correction, prot, flags, fd, offset - correction);
 			
-			struct mmap_info* magical = initialize_mmap_info(address, length, correction);
+			struct mmap_info* magical = initialize_mmap_info(aTHX_ address, length, correction);
 			reset_var(var, magical, 0);
 			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE);
 		}
@@ -511,7 +511,7 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 				real_croak_pv(aTHX_ "Could not map: handle doesn't refer to a file");
 			sv_setpvn(var, "", 0);
 
-			magical = initialize_mmap_info(SvPV_nolen(var), 0, 0);
+			magical = initialize_mmap_info(aTHX_ SvPV_nolen(var), 0, 0);
 			reset_var(var, magical, SvCUR(var));
 			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE);
 		}
