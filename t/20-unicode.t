@@ -1,11 +1,10 @@
-#!perl
-
+#!perl 
 use utf8;
 use strict;
 use warnings;
 
-use File::Map qw/map_anonymous/;
-use Test::More tests => 7;
+use File::Map qw/map_anonymous map_handle/;
+use Test::More tests => 8;
 
 use Test::Warn;
 
@@ -34,3 +33,7 @@ for (substr $mapped, 0, length $mapped) {
 my $cap_example = 'HÁLLÖ WØRLD';
 
 is $mapped, $cap_example, '$mapped is now capitalized';
+
+open my $fh, '<:utf8', $0;
+
+warning_like { map_handle my $self, $fh } qr/Shouldn't mmap non-binary filehandle: layer 'utf8' is not binary at /, 'Can\'t map utf8 handle yet';
