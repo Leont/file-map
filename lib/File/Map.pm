@@ -11,7 +11,7 @@ use warnings FATAL => 'all';
 
 use Sub::Exporter;
 use XSLoader ();
-use Carp qw/croak/;
+use Carp qw/croak carp/;
 use Const::Fast;
 use PerlIO ();
 
@@ -38,7 +38,7 @@ my %export_data = (
 		}
 	}
 
-	Sub::Exporter::setup_exporter({ exports => \@export_ok, groups => \%export_tags});
+	Sub::Exporter::setup_exporter({ exports => \@export_ok, groups => \%export_tags });
 }
 
 const our %PROTECTION_FOR => (
@@ -54,8 +54,9 @@ const my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap crlf/;    # c
 
 sub _check_layers {
 	my $fh = shift;
+	return if not warnings::enabled('layer');
 	for my $layer (PerlIO::get_layers($fh)) {
-		croak "Can't mmap not binary filehandle: layer '$layer' is not binary" if not $is_binary{$layer};
+		carp "Shouldn't mmap non-binary filehandle: layer '$layer' is not binary" if not exists $is_binary{$layer};
 	}
 	return;
 }
@@ -353,10 +354,6 @@ A zero length anonymous map is not possible (or in any way useful).
 
 An attempts was made to remap a mapping that is shared among different threads, this is not possible.
 
-=item * Can't mmap not binary filehandle: layer '%s' is not binary
-
-You tried to to map a filehandle that has some encoding layer. This is not supported by File::Map.
-
 =item * Window ($start, $end) is outside the file
 
 The offset and/or length you specified were invalid for this file.
@@ -375,6 +372,10 @@ Due to the way perl works internally, it's not possible to write a mapping imple
 
 This warning is additional to the previous one, warning you that you're losing data. This warning is only given when C<use warnings 'substr'> is in effect.
 
+=item * Shouldn't mmap non-binary filehandle: layer '%s' is not binary
+
+You tried to to map a filehandle that has some encoding layer. Encoding layers are not supported by File::Map. This warning is only given when C<use warnings 'layer'> is in effect.
+
 =item * Unknown advice '%s'
 
 You gave advise an advice it didn't know. This is probably either a typo or a portability issue. This warning is only given when C<use warnings 'portable'> is in effect.
@@ -391,25 +392,27 @@ Overwriting an empty map is rather nonsensical, hence a warning is given when th
 
 =head1 DEPENDENCIES
 
-This module depends on perl 5.8 and L<Readonly>.
+This module depends on perl 5.8 and L<Const::Fast>.
 
 =head1 PITFALLS
 
-On perl versions lower than 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, I strongly recommend upgrading to 5.12.
+On perl versions before 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, I strongly recommend upgrading to 5.12.
 
 This module assumes the file is binary data and doesn't do any encoding or newline transformation for you. Most importantly this means that:
 
 =over 2
 
-=item * On Windows, you have to remember to make your filehandles binary before passing them to C<map_handle> or C<sys_map>. They will not accept a C<crlf> filehandle as it would return a different value than reading it normally would. This can be done using open modes or L<binmode>, see L<PerlIO> for more information.
+=item * On Windows, you have to remember to make your filehandles binary before passing them to C<map_handle> or C<sys_map>. It may warn on a filehandle doing C<crlf> transformation as it would return a different value than reading it normally would. This can be remedied by using open modes or L<binmode>, see L<PerlIO> for more information.
 
-=item * You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> if it's valid utf-8, but writing to it requires you to really know what you're doing. Currently C<utf8> filehandles are not accepted, though a future version may deal wit them more gracefully.
+=item * You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> if it's valid utf-8, but writing to it requires you to really know what you're doing. Currently C<utf8> filehandles are not dealt with gracefully, though in a future version that may change.
 
 =back
 
 You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
 =head1 BUGS AND LIMITATIONS
+
+There is an off-by-one bug in Perl's regexp engine, as explained L<here|http://rt.perl.org/rt3//Public/Bug/Display.html?id=73542>. If the length of the file is an exact multiple of the page size, some regexps can trigger a segmentation fault. This can not be fixed in this module though.
 
 As any piece of software, bugs are likely to exist here. Bug reports are welcome.
 
@@ -422,8 +425,6 @@ automatically be notified of progress on your bug as I make changes.
 =over 4
 
 =item * L<Sys::Mmap>, the original Perl mmap module
-
-=item * L<IPC::Mmap>, another mmap module
 
 =item * L<mmap(2)>, your mmap man page
 
