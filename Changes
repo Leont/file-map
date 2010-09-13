@@ -1,5 +1,13 @@
 Revision history for File-Map
 
+0.30    2010-09-13
+        Fixed regression in mmap_info allocation on Win32 introduced by 0.28
+        Replaced Readonly by Const::Fast
+        Replaced Exporter by Sub::Exporter
+        Handle undefined assignment more cleanly
+        Throw an exception on localization
+        Demoted exception on non-binary handles a warning, added tests and documentation for this
+
 0.29    2010-08-25
         More fixing related to RT#60710
 
