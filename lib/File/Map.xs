@@ -365,7 +365,9 @@ static struct mmap_info* initialize_mmap_info(pTHX_ void* address, size_t length
 static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* table, int writable) {
 	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, table, (const char*) magical, 0);
 	magic->mg_private = MMAP_MAGIC_NUMBER;
+#ifdef MGf_LOCAL
 	magic->mg_flags |= MGf_LOCAL;
+#endif
 #ifdef USE_ITHREADS
 	magic->mg_flags |= MGf_DUP;
 #endif
