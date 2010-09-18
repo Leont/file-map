@@ -514,7 +514,6 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 			sv_setpvn(var, "", 0);
 
 			magical = initialize_mmap_info(aTHX_ SvPV_nolen(var), 0, 0);
-			reset_var(var, magical, SvCUR(var));
 			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE);
 		}
 
