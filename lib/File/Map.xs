@@ -375,12 +375,12 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* ta
 		SvREADONLY_on(var);
 }
 
-static int _is_stattable(pTHX_ int fd) {
+static int _is_mappable(pTHX_ int fd) {
 	Stat_t info;
 	return Fstat(fd, &info) == 0 && (S_ISREG(info.st_mode) || S_ISBLK(info.st_mode));
 }
 
-#define is_stattable(fd) _is_stattable(aTHX_ fd)
+#define is_mappable(fd) _is_mappable(aTHX_ fd)
 
 static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	MAGIC* magic;
@@ -509,7 +509,7 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 		}
 		else {
 			struct mmap_info* magical;
-			if (!is_stattable(fd))
+			if (!is_mappable(fd))
 				real_croak_pv(aTHX_ "Could not map: handle doesn't refer to a file");
 			sv_setpvn(var, "", 0);
 
