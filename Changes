@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+0.31    2010-09-20
+        Only add MGf_local to mg_flags if MGf_local is defined (5.8.8 and up)
+        Fix memory leak in empty maps (found by Test::Valgrind)
+
 0.30    2010-09-13
         Fixed regression in mmap_info allocation on Win32 introduced by 0.28
         Replaced Readonly by Const::Fast
