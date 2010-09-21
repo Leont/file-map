@@ -26,8 +26,8 @@ ok utf8::is_utf8($mapped), 'Mapped memory is decoded to characters';
 
 is $mapped, $example, '$mapped eq $example';
 
-for (substr $mapped, 0, length $mapped) {
-	warnings_like { $_ = uc $_ } [], 'Indirect capitolization gives no warnings';
+for my $var (substr $mapped, 0, length $mapped) {
+	warnings_like { $var = uc $var } [], 'Indirect capitolization gives no warnings';
 }
 
 my $cap_example = 'HÁLLÖ WØRLD';
