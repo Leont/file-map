@@ -66,4 +66,7 @@ warnings_like { undef $mmaped } [ qr/^Writing directly to a memory mapped file i
 
 map_anonymous our $local, 1024;
 
-throws_ok { local $local } qr/^Can't localize file map at /, 'Localization throws an exception';
+SKIP: {
+	skip 'Your perl doesn\'t support hooking localization', 1 if $] < 5.008008;
+	throws_ok { local $local } qr/^Can't localize file map at /, 'Localization throws an exception';
+}
