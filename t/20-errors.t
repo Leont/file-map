@@ -2,10 +2,9 @@
 
 use strict;
 use warnings;
-use bytes;
 
 use File::Map qw/:map lock_map sync advise/;
-use Test::More tests => 23;
+use Test::More tests => 24;
 use Test::Warn;
 use Test::Exception;
 
@@ -69,4 +68,10 @@ map_anonymous our $local, 1024;
 SKIP: {
 	skip 'Your perl doesn\'t support hooking localization', 1 if $] < 5.008009;
 	throws_ok { local $local } qr/^Can't localize file map at /, 'Localization throws an exception';
+}
+
+{
+	my $mystring = 'hello';
+	open my $fh, '<', \$mystring;
+	throws_ok { map_handle my ($map), $fh; } qr/Can't map fake filehandle/, 'Mapping a scalar string handle throws an error';
 }
