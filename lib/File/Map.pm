@@ -16,7 +16,7 @@ use Const::Fast;
 use PerlIO ();
 
 BEGIN {
-	our $VERSION = '0.31';
+	our $VERSION = '0.32';
 
 	XSLoader::load('File::Map', $VERSION);
 }

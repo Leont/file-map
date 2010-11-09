@@ -3,6 +3,7 @@ Build
 blib
 Makefile.PL
 META.yml
+MYMETA.yml
 ppport.h
 *~
 *.bak

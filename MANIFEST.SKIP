@@ -12,3 +12,4 @@ File-Map-.*
 ^lib/.*\.c$
 ^lib/.*\.o$
 ^.ignore
+^MYMETA.yml$
