@@ -11,7 +11,6 @@ examples/fastsearch.pl An example of a use case for this module
 t/00-load.t            A test checking if the module loads at all
 t/10-basics.t          Unit tests for the main mapping functionality
 t/10-empty.t           Unit tests for zero-sized file maps
-t/20-edges.t           Unit tests for edge conditions
 t/20-errors.t          Unit tests for erroneous situations
 t/20-protect.t         Unit tests for protect()
 t/20-threads.t         Unit tests for the thread synchronization functions
