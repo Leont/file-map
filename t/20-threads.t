@@ -3,10 +3,11 @@
 use strict;
 use warnings;
 use Config;
-use Test::More $Config{useithreads} ? ( tests => 5 ) : ( skip_all => "No threading support enabled" );
+use Test::More $Config{useithreads} ? ( tests => 6 ) : ( skip_all => "No threading support enabled" );
 use threads;
 use File::Map qw/map_anonymous sync :lock/;
 use Time::HiRes qw/sleep time/;
+use Test::NoWarnings;
 
 map_anonymous my $variable, 1024;
 

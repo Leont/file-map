@@ -18,6 +18,7 @@ my $builder = Module::Build->new(
 		'Test::Exception' => 0,
 		'Test::More'   => 0,
 		'Test::Warn'   => 0,
+		'Test::NoWarnings' => 0,
 		'Time::HiRes'  => 0,
 	},
 	requires => {

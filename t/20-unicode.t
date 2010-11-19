@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use File::Map qw/map_anonymous map_handle/;
-use Test::More tests => 8;
+use Test::More tests => 9;
+use Test::NoWarnings;
 
 use Test::Warn;
 

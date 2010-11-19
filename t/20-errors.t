@@ -4,9 +4,10 @@ use strict;
 use warnings;
 
 use File::Map qw/:map lock_map sync advise/;
-use Test::More tests => 24;
+use Test::More tests => 25;
 use Test::Warn;
 use Test::Exception;
+use Test::NoWarnings;
 
 open my $self, '<:raw', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };

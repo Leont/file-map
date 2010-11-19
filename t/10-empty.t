@@ -4,10 +4,10 @@ use strict;
 use warnings;
 use File::Map qw/:map lock_map sync/;
 use IO::Handle;
-use Test::More tests => 8;
+use Test::More tests => 9;
 use Test::Warn;
 use Test::Exception;
-
+use Test::NoWarnings;
 
 open my $fh, '+<:raw', undef;
 

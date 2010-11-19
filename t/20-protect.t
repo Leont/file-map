@@ -2,10 +2,11 @@
 
 use strict;
 use warnings;
-use Test::More tests => 7;
+use Test::More tests => 8;
 use File::Map qw/:map protect PROT_NONE/;
 use IO::Handle;
 use Test::Exception;
+use Test::NoWarnings;
 
 open my $copy, "+<:raw", undef or die "Couldn't create tempfile: $!";
 $copy->autoflush(1);
