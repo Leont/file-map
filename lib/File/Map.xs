@@ -6,6 +6,13 @@
  *
  */
 
+#if defined linux
+#	ifndef _GNU_SOURCE
+#		define _GNU_SOURCE
+#	endif
+#	define GNU_STRERROR_R
+#endif
+
 #ifdef __CYGWIN__
 #	undef WIN32
 #	undef _WIN32
@@ -24,6 +31,7 @@
 #	define MAP_PRIVATE 1
 #	define MAP_ANONYMOUS 2
 #else /* WIN32 */
+#	include <string.h>
 #	include <sys/types.h>
 #	include <sys/mman.h>
 #	include <unistd.h>
@@ -125,7 +133,7 @@ static const struct {
 #else
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-#ifdef _GNU_SOURCE
+#ifdef GNU_STRERROR_R
 	const char* message = strerror_r(errno, buffer, buffer_size);
 	if (message != buffer)
 		memcpy(buffer, message, buffer_size);
