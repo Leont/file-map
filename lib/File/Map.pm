@@ -93,10 +93,15 @@ sub map_file {
 	return;
 }
 
+my %flag_for = (
+	private => MAP_PRIVATE,
+	shared  => MAP_SHARED,
+);
 sub map_anonymous {
-	my (undef, $length) = @_;
+	my (undef, $length, $flag_name) = @_;
+	my $flag = $flag_for{ $flag_name || 'shared' } || croak 'No such flag';
 	croak 'Zero length specified for anonymous map' if $length == 0;
-	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, $ANON_FH, 0);
+	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | $flag, $ANON_FH, 0);
 	return;
 }
 
@@ -139,7 +144,7 @@ File::Map maps files or anonymous memory into perl variables.
 
 =over 4
 
-=item * Unlike normal perl variables, mapped memory is shared between threads or forked processes.
+=item * Unlike normal perl variables, mapped memory is (usually) shared between threads or forked processes.
 
 =item * It is an efficient way to slurp an entire file. Unlike for example L<File::Slurp>, this module returns almost immediately, loading the pages lazily on access. This means you only 'pay' for the parts of the file you actually use.
 
@@ -195,9 +200,9 @@ Use a filehandle to map into an lvalue. $filehandle should be a scalar filehandl
 
 Open a file and map it into an lvalue. Other than $filename, all arguments work as in map_handle.
 
-=item * map_anonymous $lvalue, $length
+=item * map_anonymous $lvalue, $length, $type
 
-Map an anonymous piece of memory.
+Map an anonymous piece of memory. $type can be either C<'shared'>, in which case it will be shared with child processes, or C<'private'>, which won't be shared.
 
 =item * sys_map $lvalue, $length, $protection, $flags, $filehandle, $offset = 0
 
@@ -209,7 +214,7 @@ Unmap a variable. Note that normally this is not necessary as variables are unma
 
 =item * remap $lvalue, $new_size
 
-Try to remap $lvalue to a new size. It may fail if there is not sufficient space to expand a mapping at its current location. This call is linux specific and not supported on other systems.
+Try to remap $lvalue to a new size. This call is linux specific and not supported on other systems. For a file backed mapping a file must be long enough to hold the new size, otherwise you can expect bus faults. For an anonymous map it must be private, shared maps can not be remapped.
 
 =back
 
