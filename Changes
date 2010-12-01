@@ -1,5 +1,12 @@
 Revision history for File-Map
 
+0.33    2010-12-01
+        Made remap actually useful (will now try to move the map if necesary)
+        Added tests for remap
+        Made code C89 compliant again
+        Fixed minor issues with strerror_r
+        Added Test::NoWarnings to tests
+
 0.32    2010-11-09
         Skip localization test when localization is not availible
         Reject scalar string handles

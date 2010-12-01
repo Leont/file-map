@@ -16,7 +16,7 @@ use Const::Fast;
 use PerlIO ();
 
 BEGIN {
-	our $VERSION = '0.32';
+	our $VERSION = '0.33';
 
 	XSLoader::load('File::Map', $VERSION);
 }
@@ -124,7 +124,7 @@ File::Map - Memory mapping made simple and safe.
 
 =head1 VERSION
 
-Version 0.32
+Version 0.33
 
 =head1 SYNOPSIS
 
