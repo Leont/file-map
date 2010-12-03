@@ -11,22 +11,18 @@ use Test::NoWarnings;
 
 open my $fh, '+<:raw', undef;
 
-{
-	my $mmaped;
+my $mmaped;
 
-	lives_ok { map_handle $mmaped, $fh } "map succeeded";
-	ok(defined $mmaped,                   "mmaped is defined");
-	ok( length $mmaped == 0,              "length of mmaped is big enough");
-	ok($mmaped eq "",                     "mmaped eq \"\"");
-	is($mmaped, "",                       "mmaped is \"\"");
+lives_ok { map_handle $mmaped, $fh } "map succeeded";
+ok(defined $mmaped,                  "mmaped is defined");
+cmp_ok(length $mmaped, '==', 0,      "length of mmaped is big enough");
+ok($mmaped eq "",                    "mmaped eq \"\"");
+is($mmaped, "",                      "mmaped is \"\"");
 
-	lives_ok { sync $mmaped } "can fake syncing empty file";
-}
+lives_ok { sync $mmaped } "can fake syncing empty file";
 
-{
-	my $mmaped;
-	lives_ok { map_handle $mmaped, $fh, '>' } "Can't map empty file writably";
+my $mmaped2;
+lives_ok { map_handle $mmaped2, $fh, '>' } "Can't map empty file writably";
 
-	warnings_like { substr $mmaped, 0, 0, "1" } qr/^Can't overwrite an empty map at /, 'Shouldn\'t assign to empty map';
-}
+warnings_like { substr $mmaped2, 0, 0, "1" } qr/^Can't overwrite an empty map at /, 'Shouldn\'t assign to empty map';
 
