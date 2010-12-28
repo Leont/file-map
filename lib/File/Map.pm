@@ -13,7 +13,7 @@ use Sub::Exporter;
 use XSLoader ();
 use Carp qw/croak carp/;
 use Const::Fast;
-use PerlIO ();
+use PerlIO::Layers qw/query_handle/;
 
 BEGIN {
 	our $VERSION = '0.34';
@@ -55,11 +55,10 @@ const my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap crlf/;    # c
 sub _check_layers {
 	my $fh = shift;
 	croak "Can't map fake filehandle" if fileno $fh < 0;
-	return if not warnings::enabled('layer');
-	for my $layer (PerlIO::get_layers($fh)) {
-		carp "Shouldn't mmap non-binary filehandle: layer '$layer' is not binary" if not exists $is_binary{$layer};
+	if (warnings::enabled('layer')) {
+		carp "Shouldn't map non-binary filehandle" if not query_handle($fh, 'mappable');
 	}
-	return;
+	return query_handle($fh, 'utf8');
 }
 
 sub _get_offset_length {
@@ -77,18 +76,23 @@ sub _get_offset_length {
 
 sub map_handle {
 	my (undef, $fh, $mode, $offset, $length) = @_;
-	_check_layers($fh);
+	my $utf8 = _check_layers($fh);
 	($offset, $length) = _get_offset_length($offset, $length, $fh);
 	_mmap_impl($_[0], $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	utf8::decode($_[0]) if $utf8;
 	return;
 }
 
 sub map_file {
 	my (undef, $filename, $mode, $offset, $length) = @_;
 	$mode ||= '<';
-	open my $fh, "$mode:raw", $filename or croak "Couldn't open file $filename: $!";
+	my ($minimode, $encoding) = $mode =~ / \A ([^:]+) ([:\w-]+)? \z /xms;
+	$encoding = ':raw' if not defined $encoding;
+	open my $fh, $minimode.$encoding, $filename or croak "Couldn't open file $filename: $!";
+	my $utf8 = _check_layers($fh);
 	($offset, $length) = _get_offset_length($offset, $length, $fh);
-	_mmap_impl($_[0], $length, $PROTECTION_FOR{$mode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	_mmap_impl($_[0], $length, $PROTECTION_FOR{$minimode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
+	utf8::decode($_[0]) if $utf8;
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
 }
@@ -100,7 +104,7 @@ my %flag_for = (
 sub map_anonymous {
 	my (undef, $length, $flag_name) = @_;
 	my $flag = $flag_for{ $flag_name || 'shared' };
-	croak 'No such flag' if not defined $flag;
+	croak "No such flag '$flag_name'" if not defined $flag;
 	croak 'Zero length specified for anonymous map' if $length == 0;
 	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | $flag, $ANON_FH, 0);
 	return;
@@ -108,10 +112,11 @@ sub map_anonymous {
 
 sub sys_map {    ## no critic (ProhibitManyArgs)
 	my (undef, $length, $protection, $flags, $fh, $offset) = @_;
-	_check_layers($fh);
+	my $utf8 = _check_layers($fh);
 	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : $fh;
 	$offset ||= 0;
 	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset);
+	utf8::decode($_[0]) if $utf8;
 	return;
 }
 
@@ -383,9 +388,9 @@ Due to the way perl works internally, it's not possible to write a mapping imple
 
 This warning is additional to the previous one, warning you that you're losing data. This warning is only given when C<use warnings 'substr'> is in effect.
 
-=item * Shouldn't mmap non-binary filehandle: layer '%s' is not binary
+=item * Shouldn't mmap non-binary filehandle
 
-You tried to to map a filehandle that has some encoding layer. Encoding layers are not supported by File::Map. This warning is only given when C<use warnings 'layer'> is in effect.
+You tried to to map a filehandle that has some encoding layer. Encoding layers are not supported by File::Map. This warning is only given when C<use warnings 'layer'> is in effect. Note that this may become an exception in a future version.
 
 =item * Unknown advice '%s'
 
@@ -403,19 +408,19 @@ Overwriting an empty map is rather nonsensical, hence a warning is given when th
 
 =head1 DEPENDENCIES
 
-This module depends on perl 5.8 and L<Const::Fast>.
+This module depends on perl 5.8, L<Const::Fast> and L<PerlIO::Layers>. Perl 5.8.8 or higher is recommended because older versions can give spurious warnings.
 
 =head1 PITFALLS
 
 On perl versions before 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, I strongly recommend upgrading to 5.12.
 
-This module assumes the file is binary data and doesn't do any encoding or newline transformation for you. Most importantly this means that:
+=over 4
 
-=over 2
+=item * This module doesn't do any encoding or newline transformation for you, and will reject any filehandle with such features enabled as mapping it would return a different value than reading it normally. Most importantly this means that on Windows you have to remember to use the C<:raw> open mode or L<binmode> to make your filehandles binary before mapping them, as by default it would do C<crlf> transformation. See L<PerlIO> for more information on how that works.
 
-=item * On Windows, you have to remember to make your filehandles binary before passing them to C<map_handle> or C<sys_map>. It may warn on a filehandle doing C<crlf> transformation as it would return a different value than reading it normally would. This can be remedied by using open modes or L<binmode>, see L<PerlIO> for more information.
+=item * You can map a C<:utf8> filehandle, but writing to it may be tricky. Hic sunt dracones.
 
-=item * You can make it a unicode string in-place by using L<utf8::decode|utf8/"Utility_functions"> if it's valid utf-8, but writing to it requires you to really know what you're doing. Currently C<utf8> filehandles are not dealt with gracefully, though in a future version that may change.
+=item * You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
 =back
 

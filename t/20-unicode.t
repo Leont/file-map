@@ -3,8 +3,10 @@ use utf8;
 use strict;
 use warnings;
 
-use File::Map qw/map_anonymous map_handle/;
-use Test::More tests => 9;
+use open qw/:std :utf8/;
+
+use File::Map qw/map_anonymous map_handle map_file/;
+use Test::More tests => 14;
 use Test::NoWarnings;
 
 use Test::Warn;
@@ -35,6 +37,25 @@ my $cap_example = 'HÁLLÖ WØRLD';
 
 is $mapped, $cap_example, '$mapped is now capitalized';
 
-open my $fh, '<:utf8', $0;
+# This is a TODO candidate
+warnings_like { $mapped = lc $mapped } qr/Writing directly to a memory mapped file is not recommended at/, 'Direct capitolization gives a warnings';
 
-warning_like { map_handle my $self, $fh } qr/Shouldn't mmap non-binary filehandle: layer 'utf8' is not binary at /, 'Can\'t map utf8 handle yet';
+is $mapped, lc $example, 'mapped is lowercased';
+
+{
+	open my $fh, '<:raw:utf8', $0;
+
+	my $utf_mapped;
+
+	warning_like { map_handle $utf_mapped, $fh } undef, 'Can map utf8 handle';
+
+	ok utf8::is_utf8($utf_mapped), 'Mapped memory is decoded to characters automatically';
+}
+
+{
+	my $utf_mapped;
+
+	warning_like { map_file $utf_mapped, $0, '<:utf8' } undef, 'Can map utf8 file';
+
+	ok utf8::is_utf8($utf_mapped), 'Mapped memory is decoded to characters automatically';
+}

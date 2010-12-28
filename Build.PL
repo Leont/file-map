@@ -25,6 +25,7 @@ my $builder = Module::Build->new(
 		perl           => 5.008,
 		'Const::Fast'  => 0,
 		'Sub::Exporter'=> 0,
+		'PerlIO::Layers' => 0.007,
 	},
 	suggests => {
 		perl           => 5.012,

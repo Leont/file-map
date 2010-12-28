@@ -189,10 +189,13 @@ static void croak_sys(pTHX_ const char* format) {
 #define PROT_ALL (PROT_READ | PROT_WRITE | PROT_EXEC)
 
 static void reset_var(SV* var, struct mmap_info* info) {
+	int utf8 = SvUTF8(var);
 	SvPVX(var) = info->fake_address;
 	SvLEN(var) = 0;
 	SvCUR(var) = info->fake_length;
 	SvPOK_only(var);
+	if (utf8)
+		SvUTF8_on(var);
 }
 
 static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string, STRLEN len) {
