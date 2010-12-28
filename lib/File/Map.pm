@@ -340,21 +340,19 @@ All functions defined in this module.
 
 =head1 DIAGNOSTICS
 
-In this overview %f is the name of the function that produced the error, and %e is some error from your OS.
-
 =head2 Exceptions
 
 =over 4
 
-=item * Could not %f: this variable is not memory mapped
+=item * Could not <function name>: this variable is not memory mapped
 
 An attempt was made to C<sync>, C<remap>, C<unmap>, C<pin>, C<unpin>, C<advise> or C<lock_map> an unmapped variable.
 
-=item * Could not %f: %e
+=item * Could not <function name>: <system error>
 
-Your OS didn't allow File::Map to do what you asked it to do for the reason specified in %e.
+Your OS didn't allow File::Map to do what you asked it to do for some reason.
 
-=item * Trying to %f on an unlocked map
+=item * Trying to <function_name> on an unlocked map
 
 You tried to C<wait_until>, C<notify> or C<broadcast> on an unlocked variable.
 
@@ -366,13 +364,17 @@ A zero length anonymous map is not possible (or in any way useful).
 
 An attempts was made to remap a mapping that is shared among different threads, this is not possible.
 
-=item * Window ($start, $end) is outside the file
+=item * Window (<start>, <end>) is outside the file
 
 The offset and/or length you specified were invalid for this file.
 
 =item * Can't map fake filehandle
 
-The filehandle you provided is not real. This may mean it's a scalar string handle.
+The filehandle you provided is not real. This may mean it's a scalar string handle or a tied handle.
+
+=item * No such flag <flag_name>
+
+The flag given for map_anonymous isn't valid, it should either be C<shared> or C<private>.
 
 =back
 
@@ -392,9 +394,9 @@ This warning is additional to the previous one, warning you that you're losing d
 
 You tried to to map a filehandle that has some encoding layer. Encoding layers are not supported by File::Map. This warning is only given when C<use warnings 'layer'> is in effect. Note that this may become an exception in a future version.
 
-=item * Unknown advice '%s'
+=item * Unknown advice '<advice>'
 
-You gave advise an advice it didn't know. This is probably either a typo or a portability issue. This warning is only given when C<use warnings 'portable'> is in effect.
+You gave advise an advice it didn't know. This is either a typo or a portability issue. This warning is only given when C<use warnings 'portable'> is in effect.
 
 =item * Syncing a readonly map makes no sense
 
@@ -410,9 +412,9 @@ Overwriting an empty map is rather nonsensical, hence a warning is given when th
 
 This module depends on perl 5.8, L<Const::Fast> and L<PerlIO::Layers>. Perl 5.8.8 or higher is recommended because older versions can give spurious warnings.
 
-=head1 PITFALLS
+On perl versions before 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, it is strongly recommended to upgrade to 5.12.
 
-On perl versions before 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, I strongly recommend upgrading to 5.12.
+=head1 PITFALLS
 
 =over 4
 
@@ -423,8 +425,6 @@ On perl versions before 5.11.5 many string functions including C<substr> are lim
 =item * You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
 =back
-
-You probably don't want to use C<E<gt>> as a mode. This does not give you reading permissions on many architectures, resulting in segmentation faults when trying to read a variable (confusingly, it will work on some others like x86).
 
 =head1 BUGS AND LIMITATIONS
 
