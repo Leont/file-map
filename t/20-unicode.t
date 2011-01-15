@@ -55,7 +55,7 @@ is $mapped, lc $example, 'mapped is lowercased';
 {
 	my $utf_mapped;
 
-	warning_like { map_file $utf_mapped, $0, '<:utf8' } undef, 'Can map utf8 file';
+	warning_like { map_file $utf_mapped, $0, '<:raw:utf8' } undef, 'Can map utf8 file';
 
 	ok utf8::is_utf8($utf_mapped), 'Mapped memory is decoded to characters automatically';
 }
