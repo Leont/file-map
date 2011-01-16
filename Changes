@@ -1,5 +1,12 @@
 Revision history for File-Map
 
+0.35    2011-01-16
+        Added proper support for PerlIO layers, in order to:
+         * reliably detect crlf transformations
+         * detect and handle utf8 layers
+        Use sterror instead of strerror_r when the latter isn't available
+   
+
 0.34    2010-12-04
         Skip remap tests as soon as possible, to avoid failures on non-Linux
         Fixed anonymous mapping on Windows
