@@ -21,8 +21,10 @@ is($mmaped, "",                      "mmaped is \"\"");
 
 lives_ok { sync $mmaped } "can fake syncing empty file";
 
-my $mmaped2;
-lives_ok { map_handle $mmaped2, $fh, '>' } "Can't map empty file writably";
+{
+	local $SIG{__WARN__} = $] > 5.008007 ? $SIG{__WARN__}: sub {};
+	my $mmaped2;
+	lives_ok { map_handle $mmaped2, $fh, '>' } "Can't map empty file writably";
 
-warnings_like { substr $mmaped2, 0, 0, "1" } qr/^Can't overwrite an empty map at /, 'Shouldn\'t assign to empty map';
-
+	warnings_like { substr $mmaped2, 0, 0, "1" } qr/^Can't overwrite an empty map at /, 'Shouldn\'t assign to empty map';
+}
