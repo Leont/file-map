@@ -220,7 +220,7 @@ Unmap a variable. Note that normally this is not necessary as variables are unma
 
 =item * remap $lvalue, $new_size
 
-Try to remap $lvalue to a new size. This call is linux specific and not supported on other systems. For a file backed mapping a file must be long enough to hold the new size, otherwise you can expect bus faults. For an anonymous map it must be private, shared maps can not be remapped.
+Try to remap $lvalue to a new size. This call is linux specific and not supported on other systems. For a file backed mapping a file must be long enough to hold the new size, otherwise you can expect bus faults. For an anonymous map it must be private, shared maps can not be remapped. B<Use with caution>.
 
 =back
 
