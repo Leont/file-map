@@ -48,7 +48,7 @@ throws_ok { map_anonymous my $foo, 0 } qr/^Zero length specified for anonymous m
 throws_ok { &map_anonymous('foo', 1000) } qr/^Modification of a read-only value attempted at /, 'Can\'t use literal as variable';
 
 SKIP: {
-	my $bound = IO::Socket::INET->new(Listen => 1, ReuseAddr => 1, LocalAddr => 'localhost') or skip "Couldn't make listening socket: $!";
+	my $bound = IO::Socket::INET->new(Listen => 1, ReuseAddr => 1, LocalAddr => 'localhost') or skip "Couldn't make listening socket: $!", 1;
 	throws_ok { map_handle my $foo, $bound } qr/^Could not map: /, 'Can\'t map STDOUT';
 }
 
