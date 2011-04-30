@@ -16,7 +16,7 @@ use Const::Fast;
 use PerlIO::Layers qw/query_handle/;
 
 BEGIN {
-	our $VERSION = '0.36';
+	our $VERSION = '0.37';
 
 	XSLoader::load('File::Map', $VERSION);
 }

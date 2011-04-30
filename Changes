@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+0.37    2011-05-02
+        Fixed permission in remap test
+        Silenced warnings on modern Test::More's
+
 0.36    2011-01-26
         Fixed tests on Windows and on perl < 5.8.7
 
