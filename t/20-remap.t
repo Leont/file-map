@@ -12,7 +12,7 @@ open my $fh, '>', undef or die "Couln't open tempfile: $!\n";
 print {$fh} "$_ pidgeons are evil\n" for 1 .. 1000;
 
 my $map;
-lives_ok { map_handle $map, $fh, '>' } 'Can map tempfile';
+lives_ok { map_handle $map, $fh, '+>' } 'Can map tempfile';
 
 is length $map, -s $fh, 'map length equals file length';
 
