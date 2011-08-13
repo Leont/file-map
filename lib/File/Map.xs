@@ -536,8 +536,10 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 		}
 		else {
 			struct mmap_info* magical;
-			if (!is_mappable(fd))
-				real_croak_pv(aTHX_ "Could not map: handle doesn't refer to a file");
+			if (!is_mappable(fd)) {
+				errno = EACCES;
+				die_sys(aTHX_ "Could not map: %s");
+			}
 			sv_setpvn(var, "", 0);
 
 			magical = initialize_mmap_info(aTHX_ SvPV_nolen(var), 0, 0, flags);
