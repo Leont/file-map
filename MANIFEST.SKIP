@@ -13,3 +13,4 @@ File-Map-.*
 ^lib/.*\.o$
 ^.ignore
 ^MYMETA.yml$
+^MYMETA\.json$

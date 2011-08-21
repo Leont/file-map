@@ -1,5 +1,6 @@
 Revision history for File-Map
 
+0.38    2011-08-21
         Taint memory maps when tainting mode is on (fixes RT#68787)
         Explicitly test error messages in "C" locale
         Give better errors on mapping zero length nonfiles
