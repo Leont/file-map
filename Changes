@@ -1,5 +1,9 @@
 Revision history for File-Map
 
+        Explicitly test error messages in "C" locale
+        Give better errors on mapping zero length nonfiles
+        Handle SV-flags more intelligently
+
 0.37    2011-05-02
         Fixed permission in remap test
         Silenced warnings on modern Test::More's
@@ -12,7 +16,6 @@ Revision history for File-Map
          * reliably detect crlf transformations
          * detect and handle utf8 layers
         Use sterror instead of strerror_r when the latter isn't available
-   
 
 0.34    2010-12-04
         Skip remap tests as soon as possible, to avoid failures on non-Linux
