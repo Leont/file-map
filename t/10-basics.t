@@ -4,7 +4,8 @@ use strict;
 use warnings;
 use File::Map qw/:map lock_map advise/;
 use IO::Handle;
-use Test::More tests => 21;
+use Scalar::Util qw/tainted/;
+use Test::More tests => 22;
 use Test::Warn;
 use Test::Exception;
 use Test::NoWarnings;
@@ -20,6 +21,7 @@ my $slurped = do { local $/; <$self> };
 	ok($mmaped eq $slurped,           "slurped is mmaped");
 	is($mmaped, $slurped,             "slurped is mmaped");
 	lives_ok { advise($mmaped, "normal") } "Advising";
+	ok(!tainted($mmaped), 'map is not tainted');
 }
 
 close $self or die "Couldn't close self: $!";

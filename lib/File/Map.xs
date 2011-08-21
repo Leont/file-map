@@ -396,6 +396,7 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* ta
 #ifdef USE_ITHREADS
 	magic->mg_flags |= MGf_DUP;
 #endif
+	SvTAINTED_on(var);
 	if (!writable)
 		SvREADONLY_on(var);
 }
