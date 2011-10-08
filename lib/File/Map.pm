@@ -8,6 +8,7 @@ package File::Map;
 use 5.008;
 use strict;
 use warnings FATAL => 'all';
+use subs qw{PROT_READ PROT_WRITE MAP_PRIVATE MAP_SHARED MAP_FILE MAP_ANONYMOUS};
 
 use Sub::Exporter;
 use XSLoader ();
@@ -15,11 +16,7 @@ use Carp qw/croak carp/;
 use Const::Fast;
 use PerlIO::Layers qw/query_handle/;
 
-BEGIN {
-	our $VERSION = '0.38';
-
-	XSLoader::load('File::Map', $VERSION);
-}
+XSLoader::load('File::Map', File::Map->VERSION);
 
 my %export_data = (
 	'map'     => [qw/map_handle map_file map_anonymous unmap sys_map/],
