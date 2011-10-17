@@ -11,7 +11,7 @@ use Test::Exception;
 use Test::NoWarnings;
 use if $^O ne 'MSWin32', POSIX => qw/setlocale LC_ALL/;
 
-setlocale(LC_ALL, 'C') if $^O ne 'MSWin32';
+setlocale(&LC_ALL, 'C') if $^O ne 'MSWin32';
 
 open my $self, '<:raw', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };
