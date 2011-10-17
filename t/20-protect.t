@@ -35,7 +35,7 @@ SKIP: {
 	}
 	else {
 		protect $mmaped, PROT_NONE;
-		substr $mmaped, 0, 3, "xxx";
+		my $var = substr $mmaped, 0, 3;
 		die "Should have been dead\n";
 	}
 }
