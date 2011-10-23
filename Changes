@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Made STDOUT test more portable
 
 0.39      2011-10-17 21:57:47 Europe/Amsterdam 
           Converted module to Dist::Zilla
