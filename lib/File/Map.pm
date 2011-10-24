@@ -179,7 +179,7 @@ It offers a simple interface targeted at common usage patterns
 
 =item * Portability
 
-File::Map supports Unix, Windows and VMS.
+File::Map supports Unix and Windows.
 
 =item * Thread synchronization
 
