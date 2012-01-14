@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fixed bug on Windows when using offsets
 
 0.40      2011-10-24 20:41:19 Europe/Amsterdam
           Made STDOUT test more portable
