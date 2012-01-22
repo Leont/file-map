@@ -326,6 +326,15 @@ static int mmap_local(pTHX_ SV* var, MAGIC* magic) {
 static const MGVTBL mmap_table  = { 0, mmap_write,  0, mmap_clear, mmap_free,  0, mmap_dup mmap_local_tail };
 static const MGVTBL empty_table = { 0, empty_write, 0, mmap_clear, empty_free, 0, mmap_dup mmap_local_tail };
 
+static Off_t S_sv_to_offset(pTHX_ SV* var) {
+#if IV_SIZE >= 8
+	return (Off_t)SvUV(var);
+#else
+	return (Off_t)round(SvNV(var)); /* hic sunt dracones */
+#endif
+}
+#define sv_to_offset(var) S_sv_to_offset(aTHX_ var)
+
 static void check_new_variable(pTHX_ SV* var) {
 	if (SvTYPE(var) > SVt_PVMG && SvTYPE(var) != SVt_PVLV)
 		Perl_croak(aTHX_ "Trying to map into a nonscalar!\n");
@@ -343,7 +352,7 @@ static void check_new_variable(pTHX_ SV* var) {
 		sv_upgrade(var, SVt_PVMG);
 }
 
-static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, off_t offset) {
+static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, Off_t offset) {
 	void* address;
 #ifdef WIN32
 	HANDLE file;
@@ -519,7 +528,7 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 	int prot;
 	int flags;
 	int fd;
-	off_t offset;
+	Off_t offset;
 	CODE:
 		check_new_variable(aTHX_ var);
 		

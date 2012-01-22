@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Redone offset handling to be more 32bit compatible
 
 0.41      2012-01-14 13:14:23 Europe/Amsterdam
           Fixed bug on Windows when using offsets

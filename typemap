@@ -1,1 +1,6 @@
-off_t	T_UV
+TYPEMAP
+Off_t	T_OFFT
+
+INPUT
+T_OFFT
+	$var = ($type)sv_to_offset($arg)
