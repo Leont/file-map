@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.42      2012-01-24 23:24:29 Europe/Amsterdam
           Redone offset handling to be more 32bit compatible
           Add large file support on Windows
 
