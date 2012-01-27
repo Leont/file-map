@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.44      2012-01-27 14:27:27 Europe/Amsterdam
           Fixed use of BITS32_MASK on Windows
 
 0.43      2012-01-27 12:42:27 Europe/Amsterdam
