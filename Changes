@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Upgrade utf8 mappings before marking them as readonly (fixes #74436)
 
 0.42      2012-01-24 23:24:29 Europe/Amsterdam
           Redone offset handling to be more 32bit compatible

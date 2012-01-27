@@ -75,8 +75,7 @@ sub map_handle {
 	my (undef, $fh, $mode, $offset, $length) = @_;
 	my $utf8 = _check_layers($fh);
 	($offset, $length) = _get_offset_length($offset, $length, $fh);
-	_mmap_impl($_[0], $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
-	utf8::decode($_[0]) if $utf8;
+	_mmap_impl($_[0], $length, $PROTECTION_FOR{ $mode || '<' }, MAP_SHARED | MAP_FILE, fileno $fh, $offset, $utf8);
 	return;
 }
 
@@ -88,8 +87,7 @@ sub map_file {
 	open my $fh, $minimode.$encoding, $filename or croak "Couldn't open file $filename: $!";
 	my $utf8 = _check_layers($fh);
 	($offset, $length) = _get_offset_length($offset, $length, $fh);
-	_mmap_impl($_[0], $length, $PROTECTION_FOR{$minimode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset);
-	utf8::decode($_[0]) if $utf8;
+	_mmap_impl($_[0], $length, $PROTECTION_FOR{$minimode}, MAP_SHARED | MAP_FILE, fileno $fh, $offset, $utf8);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
 }
@@ -112,8 +110,7 @@ sub sys_map {    ## no critic (ProhibitManyArgs)
 	my $utf8 = _check_layers($fh);
 	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : $fh;
 	$offset ||= 0;
-	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset);
-	utf8::decode($_[0]) if $utf8;
+	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset, $utf8);
 	return;
 }
 

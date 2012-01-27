@@ -399,7 +399,7 @@ static struct mmap_info* initialize_mmap_info(pTHX_ void* address, size_t length
 	return magical;
 }
 
-static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* table, int writable) {
+static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* table, int writable, int utf8) {
 	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, table, (const char*) magical, 0);
 	magic->mg_private = MMAP_MAGIC_NUMBER;
 #ifdef MGf_LOCAL
@@ -409,6 +409,8 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* ta
 	magic->mg_flags |= MGf_DUP;
 #endif
 	SvTAINTED_on(var);
+	if (utf8 && !sv_utf8_decode(var))
+		Perl_croak(aTHX_ "Invalid utf8 in memory mapping");
 	if (!writable)
 		SvREADONLY_on(var);
 }
@@ -525,13 +527,14 @@ BOOT:
     boot(aTHX);
 
 void
-_mmap_impl(var, length, prot, flags, fd, offset)
+_mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 	SV* var;
 	size_t length;
 	int prot;
 	int flags;
 	int fd;
 	Off_t offset;
+	int utf8;
 	CODE:
 		check_new_variable(aTHX_ var);
 		
@@ -545,7 +548,7 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 			
 			magical = initialize_mmap_info(aTHX_ address, length, correction, flags);
 			reset_var(var, magical);
-			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE);
+			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE, utf8);
 		}
 		else {
 			struct mmap_info* magical;
@@ -556,7 +559,7 @@ _mmap_impl(var, length, prot, flags, fd, offset)
 			sv_setpvn(var, "", 0);
 
 			magical = initialize_mmap_info(aTHX_ SvPV_nolen(var), 0, 0, flags);
-			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE);
+			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE, utf8);
 		}
 
 void
