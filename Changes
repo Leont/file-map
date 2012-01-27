@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fixed use of BITS32_MASK on Windows
 
 0.43      2012-01-27 12:42:27 Europe/Amsterdam
           Upgrade utf8 mappings before marking them as readonly (fixes #74436)

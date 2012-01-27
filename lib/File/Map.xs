@@ -363,11 +363,11 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, Off_t 
 	Off_t maxsize = offset + length;
 	prot &= PROT_ALL;
 	file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
-	mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, maxsize >> 32, maxsize & BITS32MASK, NULL);
+	mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, maxsize >> 32, maxsize & BITS32_MASK, NULL);
 	if (mapping == NULL)
 		croak_sys(aTHX_ "Could not map: %s");
 	viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot & PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
-	address = MapViewOfFile(mapping, viewflag, offset >> 32, offset & BITS32MASK, length);
+	address = MapViewOfFile(mapping, viewflag, offset >> 32, offset & BITS32_MASK, length);
 	CloseHandle(mapping);
 	if (address == NULL)
 #else
