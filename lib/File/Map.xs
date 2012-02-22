@@ -330,7 +330,7 @@ static Off_t S_sv_to_offset(pTHX_ SV* var) {
 #if IV_SIZE >= 8
 	return (Off_t)SvUV(var);
 #else
-	return (Off_t)round(SvNV(var)); /* hic sunt dracones */
+	return (Off_t)floor(SvNV(var) + 0.5); /* hic sunt dracones */
 #endif
 }
 #define sv_to_offset(var) S_sv_to_offset(aTHX_ var)
