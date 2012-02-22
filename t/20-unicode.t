@@ -6,10 +6,15 @@ use warnings;
 use open qw/:std :utf8/;
 
 use File::Map qw/map_anonymous map_handle map_file/;
-use Test::More tests => 14;
+use Test::More $] >= 5.008_008 ? (tests => 14) : (skip_all => 'File::Map doesn\'t reliably support unicode on 5.8.7 and lower');
 use Test::NoWarnings;
 
 use Test::Warn;
+
+my $builder = Test::More->builder;
+binmode $builder->output,         ":utf8";
+binmode $builder->failure_output, ":utf8";
+binmode $builder->todo_output,    ":utf8";
 
 my $example = 'Hállö wørld';
 

@@ -2,6 +2,7 @@ Revision history for File-Map
 
 {{$NEXT}}
           Replace round() by floor() + 0.5. The former is C99, the latter in C89...
+          Test a bit more leniently on perl 5.8.7
 
 0.44      2012-01-27 14:27:27 Europe/Amsterdam
           Fixed use of BITS32_MASK on Windows

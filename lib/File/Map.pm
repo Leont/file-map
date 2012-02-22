@@ -430,6 +430,8 @@ Please report any bugs or feature requests to C<bug-file-map at rt.cpan.org>, or
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=File-Map>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
+Unicode file mappings are known to be buggy on perl 5.8.7 and lower.
+
 =head1 SEE ALSO
 
 =over 4

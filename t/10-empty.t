@@ -22,7 +22,7 @@ is($mmaped, "",                      "mmaped is \"\"");
 lives_ok { sync $mmaped } "can fake syncing empty file";
 
 {
-	local $SIG{__WARN__} = $] > 5.008007 ? $SIG{__WARN__}: sub {};
+	local $SIG{__WARN__} = $] >= 5.008007 ? $SIG{__WARN__}: sub {};
 	my $mmaped2;
 	lives_ok { map_handle $mmaped2, $fh, '>' } "Can't map empty file writably";
 
