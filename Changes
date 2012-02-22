@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.45      2012-02-22 20:17:29 Europe/Amsterdam
           Replace round() by floor() + 0.5. The former is C99, the latter in C89...
           Test a bit more leniently on perl 5.8.7
 
