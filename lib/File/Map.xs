@@ -497,6 +497,12 @@ static boot(pTHX) {
 #ifdef MADV_DOFORK
 	ADVISE_CONSTANT("dofork", MADV_DOFORK);
 #endif
+#ifdef MADV_MERGEABLE
+	ADVISE_CONSTANT("mergeable", MADV_MERGEABLE);
+#endif
+#ifdef MADV_UNMERGEABLE
+	ADVISE_CONSTANT("unmergeable", MADV_UNMERGEABLE);
+#endif
 	/* BSD, Mac OS X & Solaris specific advice */
 #ifdef MADV_FREE
 	ADVISE_CONSTANT("free", MADV_FREE);

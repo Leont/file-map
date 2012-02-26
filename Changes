@@ -3,6 +3,7 @@ Revision history for File-Map
 {{$NEXT}}
           Fix madvise on cygwin
           Disable advise on VMS
+          Add mergeable and unmergeable advices for Linux
 
 0.45      2012-02-22 20:17:29 Europe/Amsterdam
           Replace round() by floor() + 0.5. The former is C99, the latter in C89...
