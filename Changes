@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.46      2012-02-26 17:59:33 Europe/Amsterdam
           Fix madvise on cygwin
           Disable advise on VMS
           Add mergeable and unmergeable advices for Linux
