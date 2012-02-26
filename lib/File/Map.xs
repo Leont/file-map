@@ -157,6 +157,10 @@ static size_t page_size() {
 }
 #endif
 
+#ifdef VMS
+#define madvise(address, length, advice) 0
+#endif
+
 #ifndef MADV_NORMAL
 #	define MADV_NORMAL 0
 #	define MADV_RANDOM 0
