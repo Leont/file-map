@@ -116,15 +116,9 @@ sub sys_map {    ## no critic (ProhibitManyArgs)
 
 1;
 
+#ABSTRACT: Memory mapping made simple and safe.
+
 __END__
-
-=head1 NAME
-
-File::Map - Memory mapping made simple and safe.
-
-=head1 VERSION
-
-Version 0.38
 
 =head1 SYNOPSIS
 
@@ -446,41 +440,3 @@ Unicode file mappings are known to be buggy on perl 5.8.7 and lower.
 
 =back
 
-=head1 AUTHOR
-
-Leon Timmermans, C<< <leont at cpan.org> >>
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc File::Map
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Map>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/File-Map>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/File-Map>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/File-Map>
-
-=back
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright 2008, 2009, 2010 Leon Timmermans, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as perl itself.
