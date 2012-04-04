@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.47      2012-04-04 23:17:55 Europe/Amsterdam
           Restore fileno in sys_map; this fixes #76253: non-anonymous sys_map was useable since e102d034
           Switch to using PodWeaver
 
