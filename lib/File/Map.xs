@@ -16,6 +16,7 @@
 #ifdef __CYGWIN__
 #	undef WIN32
 #	undef _WIN32
+#	define madvise posix_madvise
 #endif
 
 #include <assert.h>
