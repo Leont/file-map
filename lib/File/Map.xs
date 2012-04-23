@@ -6,13 +6,6 @@
  *
  */
 
-#if defined linux
-#	ifndef _GNU_SOURCE
-#		define _GNU_SOURCE
-#	endif
-#	define GNU_STRERROR_R
-#endif
-
 #ifdef __CYGWIN__
 #	undef WIN32
 #	undef _WIN32
@@ -84,13 +77,7 @@ struct mmap_info {
 #ifdef WIN32
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-	DWORD last_error = GetLastError(); 
-
-	DWORD format_flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-	int length = FormatMessage(format_flags, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)buffer, buffer_size, NULL);
-	if (buffer[length - 2] == '\r') {
-		buffer[length - 2] =  '\0';
-	}
+	strerror_s(buffer, buffer_size, errno);
 }
 
 static DWORD page_size() {
@@ -134,8 +121,8 @@ static const struct {
 #else
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-#if _POSIX_VERSION >= 200112L
-#	ifdef GNU_STRERROR_R
+#if HAVE_STRERROR_R
+#	if STRERROR_R_PROTO == REENTRANT_PROTO_B_IBW
 	const char* message = strerror_r(errno, buffer, buffer_size);
 	if (message != buffer)
 		memcpy(buffer, message, buffer_size);
@@ -170,11 +157,12 @@ static size_t page_size() {
 #	define MADV_DONTNEED 0
 #endif
 
-static void die_sys(pTHX_ const char* format) {
+static void S_die_sys(pTHX_ const char* format) {
 	char buffer[128];
 	get_sys_error(buffer, sizeof buffer);
 	Perl_croak(aTHX_ format, buffer);
 }
+#define die_sys(format) S_die_sys(aTHX_ format)
 
 static void real_croak_sv(pTHX_ SV* value) {
 	dSP;
@@ -258,7 +246,7 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	MUTEX_LOCK(&info->count_mutex);
 	if (--info->count == 0) {
 		if (munmap(info->real_address, info->real_length) == -1)
-			die_sys(aTHX_ "Could not unmap: %s");
+			die_sys("Could not unmap: %s");
 		COND_DESTROY(&info->cond);
 		MUTEX_DESTROY(&info->data_mutex);
 		MUTEX_UNLOCK(&info->count_mutex);
@@ -267,12 +255,12 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 	}
 	else {
 		if (msync(info->real_address, info->real_length, MS_ASYNC) == -1)
-			die_sys(aTHX_ "Could not sync: %s");
+			die_sys("Could not sync: %s");
 		MUTEX_UNLOCK(&info->count_mutex);
 	}
 #else
 	if (munmap(info->real_address, info->real_length) == -1)
-		die_sys(aTHX_ "Could not unmap: %s");
+		die_sys("Could not unmap: %s");
 	PerlMemShared_free(info);
 #endif 
 	SvREADONLY_off(var);
@@ -564,7 +552,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			struct mmap_info* magical;
 			if (!is_mappable(fd)) {
 				errno = EACCES;
-				die_sys(aTHX_ "Could not map: %s");
+				die_sys("Could not map: %s");
 			}
 			sv_setpvn(var, "", 0);
 
@@ -583,7 +571,7 @@ sync(var, sync = YES)
 		if (SvREADONLY(var) && ckWARN(WARN_IO))
 			Perl_warn(aTHX_ "Syncing a readonly map makes no sense");
 		if (msync(info->real_address, info->real_length, SvTRUE(sync) ? MS_SYNC : MS_ASYNC ) == -1)
-			die_sys(aTHX_ "Could not sync: %s");
+			die_sys("Could not sync: %s");
 
 #ifdef __linux__
 void
@@ -606,7 +594,7 @@ remap(var, new_size)
 		if ((info->flags & (MAP_ANONYMOUS|MAP_SHARED)) == (MAP_ANONYMOUS|MAP_SHARED))
 			Perl_croak(aTHX_ "Can't remap a shared anonymous mapping");
 		if ((new_address = mremap(info->real_address, info->real_length, new_size + correction, MREMAP_MAYMOVE)) == MAP_FAILED)
-			die_sys(aTHX_ "Could not remap: %s");
+			die_sys("Could not remap: %s");
 		set_mmap_info(info, new_address, new_size, correction);
 		reset_var(var, info);
 
@@ -627,7 +615,7 @@ pin(var)
 	CODE:
 		IGNORE_EMPTY_MAP(info);
 		if (mlock(info->real_address, info->real_length) == -1)
-			die_sys(aTHX_ "Could not pin: %s");
+			die_sys("Could not pin: %s");
 
 void
 unpin(var)
@@ -637,7 +625,7 @@ unpin(var)
 	CODE:
 		IGNORE_EMPTY_MAP(info);
 		if (munlock(info->real_address, info->real_length) == -1)
-			die_sys(aTHX_ "Could not unpin: %s");
+			die_sys("Could not unpin: %s");
 
 void
 advise(var, name)
@@ -654,7 +642,7 @@ advise(var, name)
 				Perl_warn(aTHX_ "Unknown advice '%s'", SvPV_nolen(name));
 		}
 		else if (madvise(info->real_address, info->real_length, SvUV(HeVAL(value))) == -1)
-			die_sys(aTHX_ "Could not advice: %s");
+			die_sys("Could not advice: %s");
 
 void
 protect(var, prot)
