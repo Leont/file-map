@@ -77,7 +77,13 @@ struct mmap_info {
 #ifdef WIN32
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-	strerror_s(buffer, buffer_size, errno);
+	DWORD last_error = GetLastError(); 
+
+	DWORD format_flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+	int length = FormatMessage(format_flags, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)buffer, buffer_size, NULL);
+	if (buffer[length - 2] == '\r') {
+		buffer[length - 2] =  '\0';
+	}
 }
 
 static DWORD page_size() {

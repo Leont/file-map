@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Revert to old error code on Windows
 
 0.48      2012-04-23 02:27:01 Europe/Amsterdam
           Fix madvice on old cygwin versions
