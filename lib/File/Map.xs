@@ -6,6 +6,10 @@
  *
  */
 
+#if defined(linux) && !defined(_GNU_SOURCE)
+#		define _GNU_SOURCE
+#endif
+
 #ifdef __CYGWIN__
 #	undef WIN32
 #	undef _WIN32

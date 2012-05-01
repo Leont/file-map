@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fix building on threadless Linux
 
 0.49      2012-04-26 00:06:36 Europe/Amsterdam
           Revert to old error code on Windows
