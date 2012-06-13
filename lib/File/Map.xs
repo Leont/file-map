@@ -623,9 +623,13 @@ pin(var)
 	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "pin");
 	CODE:
+#ifndef VMS
 		IGNORE_EMPTY_MAP(info);
 		if (mlock(info->real_address, info->real_length) == -1)
 			die_sys("Could not pin: %s");
+#else
+		Perl_croak(aTHX_ "pin not implemented on VMS");
+#endif
 
 void
 unpin(var)
@@ -633,9 +637,13 @@ unpin(var)
 	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "unpin");
 	CODE:
+#ifndef VMS
 		IGNORE_EMPTY_MAP(info);
 		if (munlock(info->real_address, info->real_length) == -1)
 			die_sys("Could not unpin: %s");
+#else
+		Perl_croak(aTHX_ "unpin not implemented on VMS");
+#endif
 
 void
 advise(var, name)

@@ -2,6 +2,7 @@ Revision history for File-Map
 
 {{$NEXT}}
           Remove threads.pm from dependencies
+          Disable pin and unpin on VMS
 
 0.50      2012-05-01 22:37:41 Europe/Amsterdam
           Fix building on threadless Linux
