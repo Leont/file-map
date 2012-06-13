@@ -342,7 +342,7 @@ static void check_new_variable(pTHX_ SV* var) {
 		Perl_croak(aTHX_ "Trying to map into a nonscalar!\n");
 	SV_CHECK_THINKFIRST(var);
 	if (SvREADONLY(var))
-		Perl_croak(aTHX_ PL_no_modify);
+		Perl_croak(aTHX_ "%s", PL_no_modify);
 	if (SvMAGICAL(var) && mg_find(var, PERL_MAGIC_uvar))
 		sv_unmagic(var, PERL_MAGIC_uvar);
 	if (SvROK(var))
