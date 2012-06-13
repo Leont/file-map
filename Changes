@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.51      2012-06-13 21:06:41 Europe/Amsterdam
           Remove threads.pm from dependencies
           Disable pin and unpin on VMS
           Enable compilation with -Werror=format-security
