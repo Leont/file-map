@@ -140,6 +140,7 @@ static void get_sys_error(char* buffer, size_t buffer_size) {
 	strerror_r(errno, buffer, buffer_size);
 #	endif
 #else
+	pTHX;
 	const char* message = strerror(errno);
 	strncpy(buffer, message, buffer_size - 1);
 	buffer[buffer_size - 1] = '\0';
