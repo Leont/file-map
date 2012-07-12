@@ -131,7 +131,7 @@ static const struct {
 #else
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-#if HAVE_STRERROR_R
+#ifdef HAS_STRERROR_R
 #	if STRERROR_R_PROTO == REENTRANT_PROTO_B_IBW
 	const char* message = strerror_r(errno, buffer, buffer_size);
 	if (message != buffer)
