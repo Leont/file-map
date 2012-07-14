@@ -80,7 +80,7 @@ struct mmap_info {
 
 #ifdef WIN32
 
-static void get_sys_error(char* buffer, size_t buffer_size) {
+static void get_sys_error(pTHX_ char* buffer, size_t buffer_size) {
 	DWORD last_error = GetLastError(); 
 
 	DWORD format_flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
@@ -130,8 +130,8 @@ static const struct {
 
 #else
 
-static void get_sys_error(char* buffer, size_t buffer_size) {
-#if HAVE_STRERROR_R
+static void get_sys_error(pTHX_ char* buffer, size_t buffer_size) {
+#ifdef HAS_STRERROR_R
 #	if STRERROR_R_PROTO == REENTRANT_PROTO_B_IBW
 	const char* message = strerror_r(errno, buffer, buffer_size);
 	if (message != buffer)
@@ -169,7 +169,7 @@ static size_t page_size() {
 
 static void S_die_sys(pTHX_ const char* format) {
 	char buffer[128];
-	get_sys_error(buffer, sizeof buffer);
+	get_sys_error(aTHX_ buffer, sizeof buffer);
 	Perl_croak(aTHX_ format, buffer);
 }
 #define die_sys(format) S_die_sys(aTHX_ format)
@@ -189,7 +189,7 @@ static void real_croak_pv(pTHX_ const char* value) {
 static void croak_sys(pTHX_ const char* format) {
 	char buffer[128];
 	SV* tmp;
-	get_sys_error(buffer, sizeof buffer);
+	get_sys_error(aTHX_ buffer, sizeof buffer);
 	tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
 	real_croak_sv(aTHX_ tmp);
 }
