@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.52      2012-07-17 18:10:48 Europe/Bucharest
           It's called HAS_STRERROR_R and not HAVE_STRERROR_R
           Make sure pTHX is available for sterror (5.8.7 compatibility)
 
