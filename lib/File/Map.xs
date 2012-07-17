@@ -130,7 +130,7 @@ static const struct {
 
 #else
 
-static void get_sys_error(char* buffer, size_t buffer_size) {
+static void S_get_sys_error(pTHX_ char* buffer, size_t buffer_size) {
 #ifdef HAS_STRERROR_R
 #	if STRERROR_R_PROTO == REENTRANT_PROTO_B_IBW
 	const char* message = strerror_r(errno, buffer, buffer_size);
@@ -145,6 +145,7 @@ static void get_sys_error(char* buffer, size_t buffer_size) {
 	buffer[buffer_size - 1] = '\0';
 #endif
 }
+#define get_sys_error(buffer, buffer_size) S_get_sys_error(aTHX_ buffer, buffer_size)
 
 static size_t page_size() {
 	static size_t pagesize = 0;

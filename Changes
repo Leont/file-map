@@ -2,6 +2,7 @@ Revision history for File-Map
 
 {{$NEXT}}
           It's called HAS_STRERROR_R and not HAVE_STRERROR_R
+          Make sure pTHX is available for sterror (5.8.7 compatibility)
 
 0.51      2012-06-13 21:06:41 Europe/Amsterdam
           Remove threads.pm from dependencies
