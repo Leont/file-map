@@ -10,7 +10,7 @@ use strict;
 use warnings FATAL => 'all';
 use subs qw{PROT_READ PROT_WRITE MAP_PRIVATE MAP_SHARED MAP_FILE MAP_ANONYMOUS};
 
-use Sub::Exporter;
+use Sub::Exporter::Progressive ();
 use XSLoader ();
 use Carp qw/croak carp/;
 use Const::Fast;
@@ -35,7 +35,7 @@ my %export_data = (
 		}
 	}
 
-	Sub::Exporter::setup_exporter({ exports => \@export_ok, groups => \%export_tags });
+	Sub::Exporter::Progressive->import(-setup => { exports => \@export_ok, groups => \%export_tags });
 }
 
 const our %PROTECTION_FOR => (
