@@ -440,18 +440,28 @@ static void magic_end(pTHX_ void* pre_info) {
 }
 #endif
 
-static int _protection_value(pTHX_ SV* prot) {
-	HV* protections = get_hv("File::Map::PROTECTION_FOR", FALSE);
-	if (SvPOK(prot) && hv_exists_ent(protections, prot, 0)) {
-		HE* prot_entry = hv_fetch_ent(protections, prot, FALSE, 0);
-		return SvIV(HeVAL(prot_entry));
-	}
-	else if (SvIOK(prot))
-		return SvIV(prot);
-	Perl_croak(aTHX_ "Unknown protection value '%s'", SvPV_nolen(prot));
-}
+typedef struct { const char* key; size_t length; int value; } map[];
 
-#define protection_value(prot) _protection_value(aTHX_ prot)
+static map prots = {
+	{ STR_WITH_LEN("<"), PROT_READ },
+	{ STR_WITH_LEN("+<"), PROT_READ | PROT_WRITE },
+	{ STR_WITH_LEN(">"), PROT_WRITE },
+	{ STR_WITH_LEN("+>"), PROT_READ | PROT_WRITE },
+};
+
+static int S_protection_value(pTHX_ SV* mode, int fallback) {
+	int i;
+	STRLEN len;
+	const char* value = SvPV(mode, len);
+	for (i = 0; i < sizeof prots / sizeof *prots; ++i) {
+		if (prots[i].length == len && strEQ(value, prots[i].key))
+			return prots[i].value;
+	}
+	if (fallback && SvIOK(mode))
+		return SvIV(mode);
+	Perl_croak(aTHX_ "No such mode '%s' known", mode);
+}
+#define protection_value(prot, fallback) S_protection_value(aTHX_ prot, fallback)
 
 #define YES &PL_sv_yes
 
@@ -571,6 +581,14 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE, utf8);
 		}
 
+int
+_protection_value(mode)
+	SV* mode;
+	CODE:
+		RETVAL = protection_value(mode, FALSE);
+	OUTPUT:
+		RETVAL
+
 void
 sync(var, sync = YES)
 	SV* var;
@@ -669,7 +687,7 @@ protect(var, prot)
 	SV* prot;
 	PREINIT:
 		struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
-		int prot_val = protection_value(prot);
+		int prot_val = protection_value(prot, TRUE);
 	CODE:
 		if (!EMPTY_MAP(info))
 			mprotect(info->real_address, info->real_length, prot_val);

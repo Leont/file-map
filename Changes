@@ -2,6 +2,7 @@ Revision history for File-Map
 
 {{$NEXT}}
           Switch to Sub::Exporter::Progressive
+          Moved protection flags into XS
 
 0.52      2012-07-17 18:10:48 Europe/Bucharest
           It's called HAS_STRERROR_R and not HAVE_STRERROR_R
