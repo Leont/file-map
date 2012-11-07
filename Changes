@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.53      2012-11-07 11:45:09 Europe/Amsterdam
           Switch to Sub::Exporter::Progressive
           Moved protection flags into XS
 
