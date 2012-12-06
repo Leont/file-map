@@ -1,6 +1,6 @@
 package File::Map;
 
-# This software is copyright (c) 2008, 2009, 2010 by Leon Timmermans <leont@cpan.org>.
+# This software is copyright (c) 2008, 2009, 2010, 2011, 2012 by Leon Timmermans <leont@cpan.org>.
 #
 # This is free software; you can redistribute it and/or modify it under
 # the same terms as perl itself.
@@ -13,7 +13,6 @@ use subs qw{PROT_READ PROT_WRITE MAP_PRIVATE MAP_SHARED MAP_FILE MAP_ANONYMOUS};
 use Sub::Exporter::Progressive ();
 use XSLoader ();
 use Carp qw/croak carp/;
-use Const::Fast;
 use PerlIO::Layers qw/query_handle/;
 
 XSLoader::load('File::Map', File::Map->VERSION);
@@ -38,9 +37,7 @@ my %export_data = (
 	Sub::Exporter::Progressive->import(-setup => { exports => \@export_ok, groups => \%export_tags });
 }
 
-const my $ANON_FH => -1;
-
-const my %is_binary => map { ($_ => 1) } qw/unix stdio perlio mmap crlf/;    # crlf can be binary, this needs a better check
+my $anon_fh = -1;
 
 sub _check_layers {
 	my $fh = shift;
@@ -94,14 +91,14 @@ sub map_anonymous {
 	my $flag = $flag_for{ $flag_name || 'shared' };
 	croak "No such flag '$flag_name'" if not defined $flag;
 	croak 'Zero length specified for anonymous map' if $length == 0;
-	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | $flag, $ANON_FH, 0);
+	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | $flag, $anon_fh, 0);
 	return;
 }
 
 sub sys_map {    ## no critic (ProhibitManyArgs)
 	my (undef, $length, $protection, $flags, $fh, $offset) = @_;
 	my $utf8 = _check_layers($fh);
-	my $fd = ($flags & MAP_ANONYMOUS) ? $ANON_FH : fileno $fh;
+	my $fd = ($flags & MAP_ANONYMOUS) ? $anon_fh : fileno $fh;
 	$offset ||= 0;
 	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset, $utf8);
 	return;
