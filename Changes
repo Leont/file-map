@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Deal better with copy-on-write
           Remove Const::Fast dependency
 
 0.53      2012-11-07 11:45:09 Europe/Amsterdam
