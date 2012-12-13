@@ -10,7 +10,7 @@ use strict;
 use warnings FATAL => 'all';
 use subs qw{PROT_READ PROT_WRITE MAP_PRIVATE MAP_SHARED MAP_FILE MAP_ANONYMOUS};
 
-use Sub::Exporter::Progressive ();
+use Sub::Exporter::Progressive 0.001005 ();
 use XSLoader ();
 use Carp qw/croak carp/;
 use PerlIO::Layers qw/query_handle/;
