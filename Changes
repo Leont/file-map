@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fix SV_CHECK_THINKFIRST_COW_DROP on 5.8.x
 
 0.54      2012-12-13 23:47:47 Europe/Amsterdam
           Deal better with copy-on-write

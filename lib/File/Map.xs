@@ -63,6 +63,10 @@
 
 #define MMAP_MAGIC_NUMBER 0x4c54
 
+#ifndef SV_CHECK_THINKFIRST_COW_DROP
+#define SV_CHECK_THINKFIRST_COW_DROP(sv) SV_CHECK_THINKFIRST(sv)
+#endif
+
 struct mmap_info {
 	void* real_address;
 	void* fake_address;
