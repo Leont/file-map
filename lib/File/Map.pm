@@ -388,7 +388,7 @@ Overwriting an empty map is rather nonsensical, hence a warning is given when th
 
 =head1 DEPENDENCIES
 
-This module depends on perl 5.8, L<Const::Fast> and L<PerlIO::Layers>. Perl 5.8.8 or higher is recommended because older versions can give spurious warnings.
+This module depends on perl 5.8, L<Sub::Exporter::Progressive> and L<PerlIO::Layers>. Perl 5.8.8 or higher is recommended because older versions can give spurious warnings.
 
 On perl versions before 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, it is strongly recommended to upgrade to 5.12.
 
@@ -406,7 +406,7 @@ On perl versions before 5.11.5 many string functions including C<substr> are lim
 
 =head1 BUGS AND LIMITATIONS
 
-There is an off-by-one bug in Perl's regexp engine, as explained L<here|http://rt.perl.org/rt3//Public/Bug/Display.html?id=73542>. If the length of the file is an exact multiple of the page size, some regexps can trigger a segmentation fault. This can not be fixed in this module though.
+In all perls before 5.17.5, there is an off-by-one bug in Perl's regexp engine, as explained L<here|http://rt.perl.org/rt3//Public/Bug/Display.html?id=73542>. If the length of the file is an exact multiple of the page size, some regexps can trigger a segmentation fault.
 
 As any piece of software, bugs are likely to exist here. Bug reports are welcome.
 
