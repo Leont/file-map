@@ -56,6 +56,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 
 #ifndef SvPV_free
 #	define SvPV_free(arg) sv_setpvn_mg(arg, NULL, 0);
