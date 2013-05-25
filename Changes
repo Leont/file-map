@@ -2,6 +2,7 @@ Revision history for File-Map
 
 {{$NEXT}}
           Use correct maximum length on 64-bit Windows
+          Re-add perl version suggestions
 
 0.56      2012-12-20 23:49:14 Europe/Amsterdam
           Don't run threading tests with tainting #82017
