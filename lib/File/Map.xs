@@ -544,6 +544,12 @@ static boot(pTHX) {
 #endif
 }
 
+#if defined(WIN32) || defined(__CYGWIN__)
+#define PTR_MAX ULLONG_MAX
+#else
+#define PTR_MAX ULONG_MAX
+#endif
+
 MODULE = File::Map				PACKAGE = File::Map
 
 PROTOTYPES: DISABLED
@@ -567,7 +573,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			ptrdiff_t correction = offset % page_size();
 			void* address;
 			struct mmap_info* magical;
-			if (length > ULONG_MAX - correction)
+			if (length > PTR_MAX - correction)
 				real_croak_pv(aTHX_ "Can't map: length + offset overflows");
 			address = do_mapping(aTHX_ length + correction, prot, flags, fd, offset - correction);
 			
