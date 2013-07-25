@@ -18,7 +18,7 @@ BEGIN {
 }
 use File::Map qw/map_anonymous sync :lock/;
 use Time::HiRes qw/sleep time/;
-use Test::NoWarnings;
+use Test::Warnings;
 
 map_anonymous my $variable, 1024;
 

@@ -5,7 +5,7 @@ use warnings;
 use Test::More $^O eq 'linux' ? (tests => 15) : skip_all => 'Only works on Linux';
 use File::Map qw/map_handle map_anonymous remap/;
 use Test::Exception;
-use Test::NoWarnings;
+use Test::Warnings;
 
 open my $fh, '>', undef or die "Couln't open tempfile: $!\n";
 

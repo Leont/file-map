@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Converted Test::Warn and Test::NoWarnings to Test::Warnings
 
 0.57      2013-05-25 23:48:07 Europe/Amsterdam
           Use correct maximum length on 64-bit Windows
