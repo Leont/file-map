@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Exception;
+use Test::Fatal 'lives_ok';
 use File::Map qw/:map lock_map advise/;
 use Scalar::Util qw/tainted/;
 

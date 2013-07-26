@@ -6,7 +6,7 @@ use File::Map qw/:map lock_map sync/;
 use IO::Handle;
 use Test::More tests => 9;
 use Test::Warnings qw/warning/;
-use Test::Exception;
+use Test::Fatal qw/lives_ok/;
 
 open my $fh, '+<:raw', undef;
 

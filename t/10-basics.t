@@ -7,7 +7,7 @@ use IO::Handle;
 use Scalar::Util qw/tainted/;
 use Test::More tests => 22;
 use Test::Warnings;
-use Test::Exception;
+use Test::Fatal qw/lives_ok/;
 
 open my $self, '<:raw', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };

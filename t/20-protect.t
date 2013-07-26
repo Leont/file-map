@@ -5,7 +5,7 @@ use warnings;
 use Test::More tests => 8;
 use File::Map qw/:map protect PROT_NONE/;
 use IO::Handle;
-use Test::Exception;
+use Test::Fatal qw/lives_ok exception/;
 use Test::Warnings;
 
 open my $copy, "+<:raw", undef or die "Couldn't create tempfile: $!";
@@ -19,7 +19,7 @@ my $howmany = $mmaped =~ tr/9/_/;
 is($mmaped, "012345678_" x 10, "$howmany characters exchanged");
 
 protect $mmaped, '<';
-throws_ok { $mmaped =~ tr/_/:/ } qr/Modification of a read-only value attempted/, 'now read only';
+like(exception { $mmaped =~ tr/_/:/ }, qr/Modification of a read-only value attempted/, 'now read only');
 is($mmaped, "012345678_" x 10, "still the same value");
 
 protect $mmaped, '+<';
