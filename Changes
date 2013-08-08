@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.58      2013-08-08 23:18:15 Europe/Amsterdam
           Converted from Test::Exception to Test::Fatal
           Converted Test::Warn and Test::NoWarnings to Test::Warnings
 
