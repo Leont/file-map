@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Explicitly depend on Test::Warnings 0.004
 
 0.58      2013-08-08 23:18:15 Europe/Amsterdam
           Converted from Test::Exception to Test::Fatal
