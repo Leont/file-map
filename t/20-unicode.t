@@ -7,7 +7,7 @@ use open qw/:std :utf8/;
 
 use File::Map qw/map_anonymous map_handle map_file/;
 use Test::More $] >= 5.008_008 ? (tests => 14) : (skip_all => 'File::Map doesn\'t reliably support unicode on 5.8.7 and lower');
-use Test::Warnings 0.004 qw/warning warnings/;
+use Test::Warnings 0.005 qw/warning warnings/;
 
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";

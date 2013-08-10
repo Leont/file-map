@@ -6,7 +6,7 @@ use warnings;
 use File::Map qw/:map lock_map sync advise/;
 use IO::Socket::INET;
 use Test::More tests => 27;
-use Test::Warnings 0.004 qw/warning warnings/;
+use Test::Warnings 0.005 qw/warning warnings/;
 use Test::Fatal qw/exception lives_ok dies_ok/;
 use if $^O ne 'MSWin32', POSIX => qw/setlocale LC_ALL/;
 
