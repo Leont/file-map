@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Improve 64 bit pointer logic on Windows
 
 0.60      2013-08-11 01:20:06 Europe/Amsterdam
           Upgrade dependency to Test::Warnings 0.005

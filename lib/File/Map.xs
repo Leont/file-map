@@ -544,7 +544,7 @@ static boot(pTHX) {
 #endif
 }
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#if PTRSIZE == 8 && (defined(WIN32) || defined(__CYGWIN__))
 #ifndef ULLONG_MAX
 #define PTR_MAX _UI64_MAX /* MS Platform SDK crt */
 #else
