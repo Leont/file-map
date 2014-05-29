@@ -53,6 +53,7 @@
 #endif
 
 #define PERL_NO_GET_CONTEXT
+#define PERL_REENTR_API 1
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -84,16 +85,6 @@ struct mmap_info {
 };
 
 #ifdef WIN32
-
-static void get_sys_error(char* buffer, size_t buffer_size) {
-	DWORD last_error = GetLastError(); 
-
-	DWORD format_flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-	int length = FormatMessage(format_flags, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)buffer, buffer_size, NULL);
-	if (buffer[length - 2] == '\r') {
-		buffer[length - 2] =  '\0';
-	}
-}
 
 static DWORD page_size() {
 	static DWORD pagesize = 0;
@@ -135,23 +126,6 @@ static const struct {
 
 #else
 
-static void S_get_sys_error(pTHX_ char* buffer, size_t buffer_size) {
-#ifdef HAS_STRERROR_R
-#	if STRERROR_R_PROTO == REENTRANT_PROTO_B_IBW
-	const char* message = strerror_r(errno, buffer, buffer_size);
-	if (message != buffer)
-		memcpy(buffer, message, buffer_size);
-#	else
-	strerror_r(errno, buffer, buffer_size);
-#	endif
-#else
-	const char* message = strerror(errno);
-	strncpy(buffer, message, buffer_size - 1);
-	buffer[buffer_size - 1] = '\0';
-#endif
-}
-#define get_sys_error(buffer, buffer_size) S_get_sys_error(aTHX_ buffer, buffer_size)
-
 static size_t page_size() {
 	static size_t pagesize = 0;
 	if (pagesize == 0) {
@@ -173,12 +147,7 @@ static size_t page_size() {
 #	define MADV_DONTNEED 0
 #endif
 
-static void S_die_sys(pTHX_ const char* format) {
-	char buffer[128];
-	get_sys_error(buffer, sizeof buffer);
-	Perl_croak(aTHX_ format, buffer);
-}
-#define die_sys(format) S_die_sys(aTHX_ format)
+#define die_sys(format) Perl_croak(aTHX_ format, strerror(errno))
 
 static void real_croak_sv(pTHX_ SV* value) {
 	dSP;
@@ -187,18 +156,8 @@ static void real_croak_sv(pTHX_ SV* value) {
 	PUTBACK;
 	call_pv("Carp::croak", G_VOID | G_DISCARD);
 }
-
-static void real_croak_pv(pTHX_ const char* value) {
-	real_croak_sv(aTHX_ sv_2mortal(newSVpv(value, 0)));
-}
-
-static void croak_sys(pTHX_ const char* format) {
-	char buffer[128];
-	SV* tmp;
-	get_sys_error(buffer, sizeof buffer);
-	tmp = sv_2mortal(newSVpvf(format, buffer, NULL));
-	real_croak_sv(aTHX_ tmp);
-}
+#define real_croak_pvs(string) real_croak_sv(aTHX_ sv_2mortal(newSVpvs(string)))
+#define croak_sys(format) real_croak_sv(aTHX_ sv_2mortal(newSVpvf(format, strerror(errno))))
 
 #define PROT_ALL (PROT_READ | PROT_WRITE | PROT_EXEC)
 
@@ -374,7 +333,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, Off_t 
 	file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
 	mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, maxsize >> 32, maxsize & BITS32_MASK, NULL);
 	if (mapping == NULL)
-		croak_sys(aTHX_ "Could not map: %s");
+		croak_sys("Could not map: %s");
 	viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot & PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
 	address = MapViewOfFile(mapping, viewflag, offset >> 32, offset & BITS32_MASK, length);
 	CloseHandle(mapping);
@@ -383,7 +342,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, Off_t 
 	address = mmap(0, length, prot, flags | MAP_VARIABLE, fd, offset);
 	if (address == MAP_FAILED)
 #endif
-		croak_sys(aTHX_ "Could not map: %s");
+		croak_sys("Could not map: %s");
 	return address;
 }
 
@@ -578,7 +537,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			void* address;
 			struct mmap_info* magical;
 			if (length > PTR_MAX - correction)
-				real_croak_pv(aTHX_ "Can't map: length + offset overflows");
+				real_croak_pvs("can't map: length + offset overflows");
 			address = do_mapping(aTHX_ length + correction, prot, flags, fd, offset - correction);
 			
 			magical = initialize_mmap_info(aTHX_ address, length, correction, flags);
