@@ -8,9 +8,13 @@ use IO::Socket::INET;
 use Test::More tests => 27;
 use Test::Warnings 0.005 qw/warning warnings/;
 use Test::Fatal qw/exception lives_ok dies_ok/;
-use if $^O ne 'MSWin32', POSIX => qw/setlocale LC_ALL/;
+BEGIN {
+	(*setlocale, *LC_ALL) =
+		($^O eq 'MSWin32' or $^O eq 'android') ? (sub { 'C' }, sub () { 0 })
+		: do { require POSIX; (\&POSIX::setlocale, \&POSIX::LC_ALL) };
+}
 
-setlocale(&LC_ALL, 'C') if $^O ne 'MSWin32';
+setlocale(LC_ALL, 'C');
 
 open my $self, '<:raw', $0 or die "Couldn't open self: $!";
 my $slurped = do { local $/; <$self> };

@@ -2,6 +2,7 @@ Revision history for File-Map
 
 {{$NEXT}}
           Reuse perl's reentrant API
+          Skip setlocale on android
 
 0.61      2013-10-04 21:36:19 Europe/Amsterdam
           Improve 64 bit pointer logic on Windows
