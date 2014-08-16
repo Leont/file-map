@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.62      2014-08-16 14:34:48+02:00 Europe/Amsterdam
           Reuse perl's reentrant API
           Skip setlocale on android
 
