@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fix error message on unknown protect mode
 
 0.62      2014-08-16 14:34:48+02:00 Europe/Amsterdam
           Reuse perl's reentrant API

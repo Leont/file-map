@@ -424,7 +424,7 @@ static int S_protection_value(pTHX_ SV* mode, int fallback) {
 	}
 	if (fallback && SvIOK(mode))
 		return SvIV(mode);
-	Perl_croak(aTHX_ "No such mode '%s' known", mode);
+	Perl_croak(aTHX_ "No such mode '%s' known", SvPV_nolen(mode));
 }
 #define protection_value(prot, fallback) S_protection_value(aTHX_ prot, fallback)
 
