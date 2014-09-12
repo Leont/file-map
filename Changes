@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.63      2014-09-12 18:27:17+02:00 Europe/Amsterdam
           Fix error message on unknown protect mode
 
 0.62      2014-08-16 14:34:48+02:00 Europe/Amsterdam
