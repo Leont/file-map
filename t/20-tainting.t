@@ -7,6 +7,8 @@ use Test::Fatal 'lives_ok';
 use File::Map qw/:map lock_map advise/;
 use Scalar::Util qw/tainted/;
 
+plan skip_all => 'No taint support' if not tainted($0);
+
 my $map;
 lives_ok { map_file($map, $0) } 'Can map under tainting';
 
@@ -16,6 +18,6 @@ ok(substr($map, 1, 10), 'substring from mapping is also tainted');
 
 my $piece = substr($map, 1, 10);
 
-ok($piece, 'copy of substring from mapping is also tainted');
+ok(tainted($piece), 'copy of substring from mapping is also tainted');
 
 done_testing;
