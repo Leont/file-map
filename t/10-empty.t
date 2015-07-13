@@ -27,3 +27,8 @@ TODO: {
 
 	like(warning { substr $mmaped2, 0, 0, "1" }, qr/^Can't overwrite an empty map at /, 'Shouldn\'t assign to empty map');
 }
+
+foreach my $filename ( 1, 2 ) {
+    my $input_filename = $0;
+    map_file my $input, $input_filename, '<';
+}

@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fix segfault in empty mappings
 
 0.63      2014-09-12 18:27:17+02:00 Europe/Amsterdam
           Fix error message on unknown protect mode

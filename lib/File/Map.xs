@@ -262,10 +262,6 @@ static int empty_free(pTHX_ SV* var, MAGIC* magic) {
 #else
 	PerlMemShared_free(info);
 #endif 
-	SvREADONLY_off(var);
-	SvPV_free(var);
-	SvPVX(var) = NULL;
-	SvCUR(var) = 0;
 	return 0;
 }
 
