@@ -436,7 +436,7 @@ static int S_protection_value(pTHX_ SV* mode, int fallback) {
 		XSRETURN_EMPTY;\
 	} STMT_END
 
-static boot(pTHX) {
+static void boot(pTHX) {
 	AV* constants = newAV();
 	HV* stash = get_hv("File::Map::", FALSE);
 	HV* advise_constants = newHV();
