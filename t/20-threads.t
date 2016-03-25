@@ -64,7 +64,7 @@ ok(1, "Second notification worked");
 	lock_map $variable;
 	my $foo = wait_until { substr($_, 0, 5) eq "Camel" } $variable;
 	is($foo, 1, '$foo == 1');
-	cmp_ok(time - $start, '>', 0.2, "Must have waited");
+	cmp_ok(time - $start, '>', 0.19, "Must have waited");
 	is(substr($variable, 0, 5), "Camel", 'Variable should contain "Camel"');
 }
 
