@@ -5,7 +5,7 @@ use warnings;
 use File::Map qw/:map lock_map advise/;
 use IO::Handle;
 use Scalar::Util qw/tainted/;
-use Test::More tests => 22;
+use Test::More tests => 24;
 use Test::Warnings;
 use Test::Fatal qw/lives_ok/;
 
@@ -33,6 +33,12 @@ close $self or die "Couldn't close self: $!";
 	is($mmaped, $slurped,        "slurped is mmaped");
 
 	lives_ok { unmap($mmaped) } "Unmapping";
+}
+
+{
+	my %hash;
+	lives_ok { map_file($hash{map}, $0) } 'mapping self into a hash';
+	is($hash{map}, $slurped, 'Correctly autovifivies hash entry');
 }
 
 open my $copy, "+<:raw", undef or die "Couldn't create tempfile: $!";

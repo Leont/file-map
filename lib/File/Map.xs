@@ -538,6 +538,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			
 			magical = initialize_mmap_info(aTHX_ address, length, correction, flags);
 			reset_var(var, magical);
+			SvSETMAGIC(var);
 			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE, utf8);
 		}
 		else {
@@ -549,6 +550,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			sv_setpvn(var, "", 0);
 
 			magical = initialize_mmap_info(aTHX_ SvPV_nolen(var), 0, 0, flags);
+			SvSETMAGIC(var);
 			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE, utf8);
 		}
 

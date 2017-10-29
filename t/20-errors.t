@@ -5,7 +5,7 @@ use warnings;
 
 use File::Map qw/:map lock_map sync advise/;
 use IO::Socket::INET;
-use Test::More tests => 27;
+use Test::More tests => 26;
 use Test::Warnings 0.005 qw/warning warnings/;
 use Test::Fatal qw/exception lives_ok dies_ok/;
 BEGIN {
@@ -85,9 +85,6 @@ SKIP: {
 	open my $fh, '<', \$mystring;
 	like(exception { map_handle my ($map), $fh; }, qr/Can't map fake filehandle/, 'Mapping a scalar string handle throws an error');
 }
-
-my %hash;
-lives_ok { map_anonymous $hash{'foo'}, 4096 } 'mapping a hash element shouldn\'t croak';
 
 my $x;
 my $y = \$x;
