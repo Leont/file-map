@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.65      2017-10-30 13:37:57+01:00 Europe/Amsterdam
           - Fix mapping into a hash element
           - Fix compilation warning by giving boot function a proper return type
           - Take into account sleep 0.1 may sleep a little less
