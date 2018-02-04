@@ -63,8 +63,6 @@
 #	define SvPV_free(arg) sv_setpvn_mg(arg, NULL, 0);
 #endif
 
-#define MMAP_MAGIC_NUMBER 0x4c54
-
 #ifndef SV_CHECK_THINKFIRST_COW_DROP
 #define SV_CHECK_THINKFIRST_COW_DROP(sv) SV_CHECK_THINKFIRST(sv)
 #endif
@@ -365,7 +363,6 @@ static struct mmap_info* initialize_mmap_info(pTHX_ void* address, size_t length
 
 static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* table, int writable, int utf8) {
 	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, table, (const char*) magical, 0);
-	magic->mg_private = MMAP_MAGIC_NUMBER;
 #ifdef MGf_LOCAL
 	magic->mg_flags |= MGf_LOCAL;
 #endif
@@ -388,7 +385,7 @@ static int _is_mappable(pTHX_ int fd) {
 
 static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	MAGIC* magic;
-	if (!SvMAGICAL(var) || (magic = mg_find(var, PERL_MAGIC_uvar)) == NULL ||  magic->mg_private != MMAP_MAGIC_NUMBER)
+	if (!SvMAGICAL(var) || (magic = mg_find(var, PERL_MAGIC_uvar)) == NULL || (magic->mg_virtual != &mmap_table && magic->mg_virtual != &empty_table))
 		Perl_croak(aTHX_ "Could not %s: this variable is not memory mapped", funcname);
 	return (struct mmap_info*) magic->mg_ptr;
 }
