@@ -57,6 +57,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#define NEED_mg_findext
 #include "ppport.h"
 
 #ifndef SvPV_free
@@ -185,26 +186,25 @@ static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string
 
 static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-	if (!SvOK(var))
-		mmap_fixup(aTHX_ var, info, NULL, 0);
-	else if (!SvPOK(var)) {
-		STRLEN len;
-		const char* string = SvPV(var, len);
-		mmap_fixup(aTHX_ var, info, string, len);
+	if (info->real_length) {
+		if (!SvOK(var))
+			mmap_fixup(aTHX_ var, info, NULL, 0);
+		else if (!SvPOK(var)) {
+			STRLEN len;
+			const char* string = SvPV(var, len);
+			mmap_fixup(aTHX_ var, info, string, len);
+		}
+		else if (SvPVX(var) != info->fake_address)
+			mmap_fixup(aTHX_ var, info, SvPVX(var), SvCUR(var));
+		else
+			SvPOK_only_UTF8(var);
 	}
-	else if (SvPVX(var) != info->fake_address)
-		mmap_fixup(aTHX_ var, info, SvPVX(var), SvCUR(var));
-	else
-		SvPOK_only_UTF8(var);
-	return 0;
-}
-
-static int empty_write(pTHX_ SV* var, MAGIC* magic) {
-	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-	if (!SvPOK(var) || sv_len(var) != 0) {
-		sv_setpvn(var, "", 0);
-		if (ckWARN(WARN_SUBSTR))
-			Perl_warn(aTHX_ "Can't overwrite an empty map");
+	else {
+		if (!SvPOK(var) || sv_len(var) != 0) {
+			sv_setpvn(var, "", 0);
+			if (ckWARN(WARN_SUBSTR))
+				Perl_warn(aTHX_ "Can't overwrite an empty map");
+		}
 	}
 	return 0;
 }
@@ -219,7 +219,7 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 #ifdef USE_ITHREADS
 	MUTEX_LOCK(&info->count_mutex);
 	if (--info->count == 0) {
-		if (munmap(info->real_address, info->real_length) == -1)
+		if (info->real_length && munmap(info->real_address, info->real_length) == -1)
 			die_sys("Could not unmap: %s");
 		COND_DESTROY(&info->cond);
 		MUTEX_DESTROY(&info->data_mutex);
@@ -228,38 +228,18 @@ static int mmap_free(pTHX_ SV* var, MAGIC* magic) {
 		PerlMemShared_free(info);
 	}
 	else {
-		if (msync(info->real_address, info->real_length, MS_ASYNC) == -1)
+		if (info->real_length && msync(info->real_address, info->real_length, MS_ASYNC) == -1)
 			die_sys("Could not sync: %s");
 		MUTEX_UNLOCK(&info->count_mutex);
 	}
 #else
-	if (munmap(info->real_address, info->real_length) == -1)
+	if (info->real_length && munmap(info->real_address, info->real_length) == -1)
 		die_sys("Could not unmap: %s");
 	PerlMemShared_free(info);
 #endif 
 	SvREADONLY_off(var);
 	SvPVX(var) = NULL;
 	SvCUR(var) = 0;
-	return 0;
-}
-
-static int empty_free(pTHX_ SV* var, MAGIC* magic) {
-	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
-#ifdef USE_ITHREADS
-	MUTEX_LOCK(&info->count_mutex);
-	if (--info->count == 0) {
-		COND_DESTROY(&info->cond);
-		MUTEX_DESTROY(&info->data_mutex);
-		MUTEX_UNLOCK(&info->count_mutex);
-		MUTEX_DESTROY(&info->count_mutex);
-		PerlMemShared_free(info);
-	}
-	else {
-		MUTEX_UNLOCK(&info->count_mutex);
-	}
-#else
-	PerlMemShared_free(info);
-#endif 
 	return 0;
 }
 
@@ -285,8 +265,7 @@ static int mmap_local(pTHX_ SV* var, MAGIC* magic) {
 #define mmap_local_tail
 #endif
 
-static const MGVTBL mmap_table  = { 0, mmap_write,  0, mmap_clear, mmap_free,  0, mmap_dup mmap_local_tail };
-static const MGVTBL empty_table = { 0, empty_write, 0, mmap_clear, empty_free, 0, mmap_dup mmap_local_tail };
+static const MGVTBL mmap_table  = { 0, mmap_write, 0, mmap_clear, mmap_free, 0, mmap_dup mmap_local_tail };
 
 static Off_t S_sv_to_offset(pTHX_ SV* var) {
 #if IV_SIZE >= 8
@@ -361,8 +340,8 @@ static struct mmap_info* initialize_mmap_info(pTHX_ void* address, size_t length
 	return magical;
 }
 
-static void add_magic(pTHX_ SV* var, struct mmap_info* magical, const MGVTBL* table, int writable, int utf8) {
-	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, table, (const char*) magical, 0);
+static void add_magic(pTHX_ SV* var, struct mmap_info* magical, int writable, int utf8) {
+	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, &mmap_table, (const char*) magical, 0);
 #ifdef MGf_LOCAL
 	magic->mg_flags |= MGf_LOCAL;
 #endif
@@ -385,7 +364,7 @@ static int _is_mappable(pTHX_ int fd) {
 
 static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	MAGIC* magic;
-	if (!SvMAGICAL(var) || (magic = mg_find(var, PERL_MAGIC_uvar)) == NULL || (magic->mg_virtual != &mmap_table && magic->mg_virtual != &empty_table))
+	if (!SvMAGICAL(var) || (magic = mg_findext(var, PERL_MAGIC_uvar, &mmap_table)) == NULL)
 		Perl_croak(aTHX_ "Could not %s: this variable is not memory mapped", funcname);
 	return (struct mmap_info*) magic->mg_ptr;
 }
@@ -536,7 +515,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 			magical = initialize_mmap_info(aTHX_ address, length, correction, flags);
 			reset_var(var, magical);
 			SvSETMAGIC(var);
-			add_magic(aTHX_ var, magical, &mmap_table, prot & PROT_WRITE, utf8);
+			add_magic(aTHX_ var, magical, prot & PROT_WRITE, utf8);
 		}
 		else {
 			struct mmap_info* magical;
@@ -548,7 +527,7 @@ _mmap_impl(var, length, prot, flags, fd, offset, utf8 = 0)
 
 			magical = initialize_mmap_info(aTHX_ SvPV_nolen(var), 0, 0, flags);
 			SvSETMAGIC(var);
-			add_magic(aTHX_ var, magical, &empty_table, prot & PROT_WRITE, utf8);
+			add_magic(aTHX_ var, magical, prot & PROT_WRITE, utf8);
 		}
 
 int
