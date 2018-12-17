@@ -1,0 +1,12 @@
+prereqs:
+  runtime:
+    requires:
+      perl: 5.008001
+    recommends:
+      perl: 5.008008
+    suggests:
+      perl: 5.018000
+keywords:
+- mmap
+- memory
+- mapping
