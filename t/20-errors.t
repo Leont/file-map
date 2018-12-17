@@ -5,7 +5,7 @@ use warnings;
 
 use File::Map qw/:map lock_map sync advise/;
 use IO::Socket::INET;
-use Test::More tests => 26;
+use Test::More tests => 27;
 use Test::Warnings 0.005 qw/warning warnings/;
 use Test::Fatal qw/exception lives_ok dies_ok/;
 BEGIN {
@@ -73,10 +73,11 @@ like(exception { map_file my $str, $0, '<', -1, 100; $str =~ tr/a// }, qr/^Windo
 
 like(warning { undef $mmaped }, qr/^Writing directly to a memory mapped file is not recommended at/, 'Survives undefing');
 
-map_anonymous our $local, 1024;
+like(warning { substr $mmaped, -2, 2, "" }, qr/Writing directly to a memory mapped file is not recommended/);
 
 SKIP: {
 	skip 'Your perl doesn\'t support hooking localization', 1 if $] < 5.008009;
+	map_anonymous our $local, 1024;
 	like(exception { local $local }, qr/^Can't localize file map at /, 'Localization throws an exception');
 }
 

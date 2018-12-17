@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          - Warn when buffer gets truncated
 
 0.65      2017-10-30 13:37:57+01:00 Europe/Amsterdam
           - Fix mapping into a hash element

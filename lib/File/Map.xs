@@ -196,8 +196,13 @@ static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 		}
 		else if (SvPVX(var) != info->fake_address)
 			mmap_fixup(aTHX_ var, info, SvPVX(var), SvCUR(var));
-		else
+		else {
+			if (ckWARN(WARN_SUBSTR) && SvCUR(var) != info->fake_length) {
+				Perl_warn(aTHX_ "Writing directly to a memory mapped file is not recommended");
+				SvCUR(var) = info->fake_length;
+			}
 			SvPOK_only_UTF8(var);
+		}
 	}
 	else {
 		if (!SvPOK(var) || sv_len(var) != 0) {
