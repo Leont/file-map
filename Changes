@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          - Fix unresolved symbol "madvise" on QNX NTO
 
 0.66      2018-12-18 16:57:58+01:00 Europe/Amsterdam
           - Warn when buffer gets truncated
