@@ -34,6 +34,10 @@
 #	include <unistd.h>
 #endif /* WIN32 */
 
+#ifdef __QNX__
+# define madvise posix_madvise
+#endif
+
 #ifndef MAP_ANONYMOUS
 #	define MAP_ANONYMOUS MAP_ANON
 #elif !defined MAP_ANON
