@@ -209,7 +209,6 @@ static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 }
 
 static int empty_write(pTHX_ SV* var, MAGIC* magic) {
-	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
 	if (!SvPOK(var) || sv_len(var) != 0) {
 		sv_setpvn(var, "", 0);
 		if (ckWARN(WARN_SUBSTR))
@@ -443,7 +442,6 @@ static int S_protection_value(pTHX_ SV* mode, int fallback) {
 	} STMT_END
 
 static void boot(pTHX) {
-	AV* constants = newAV();
 	HV* stash = get_hv("File::Map::", FALSE);
 	HV* advise_constants = newHV();
 
@@ -708,7 +706,7 @@ wait_until(block, var)
 			SPAGAIN;
 			if (SvTRUE(TOPs))
 				break;
-			POPs;
+			(void)POPs;
 			COND_WAIT(&info->cond, &info->data_mutex);
 		}
 
