@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          Fix compilation warning by giving boot function a proper return type
 
 0.67      2020-06-26 00:26:54+02:00 Europe/Amsterdam
           - Fix unresolved symbol "madvise" on QNX NTO

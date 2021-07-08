@@ -5,7 +5,7 @@ use warnings;
 use Config;
 BEGIN {
 	# Yes, this is really necessary
-	if ($Config{useithreads}) {
+	if ($Config{useithreads} && $^O ne 'gnu') {
 		require threads;
 		threads->import();
 		require Test::More;
