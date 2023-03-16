@@ -67,15 +67,6 @@ sub map_anonymous {
 	return;
 }
 
-sub sys_map {    ## no critic (ProhibitManyArgs)
-	my (undef, $length, $protection, $flags, $fh, $offset) = @_;
-	my $utf8 = _check_layers($fh);
-	my $fd = ($flags & MAP_ANONYMOUS) ? $anon_fh : fileno $fh;
-	$offset ||= 0;
-	_mmap_impl($_[0], $length, $protection, $flags, $fd, $offset, $utf8);
-	return;
-}
-
 1;
 
 #ABSTRACT: Memory mapping made simple and safe.

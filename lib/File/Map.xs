@@ -571,6 +571,18 @@ void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_
 }
 #define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)
 
+void S_sys_map(pTHX_ SV* var, size_t length, int protection, int flags, SV* fh, Off_t offset) {
+	if (flags & MAP_ANONYMOUS)
+		_mmap_impl(var, length, protection, flags, -1, offset, 0);
+	else {
+		PerlIO* pio = IoIFP(sv_2io(fh)); // XXX error check
+		int utf8 = _check_layers(pio);
+		int fd = PerlIO_fileno(pio);
+		_mmap_impl(var, length, protection, flags, fd, offset, utf8);
+	}
+}
+#define sys_map(var, length, protection, flags, fh, offset) S_sys_map(aTHX_ var, length, protection, flags, fh, offset)
+
 #define _protection_value(mode) protection_value(mode, FALSE);
 
 void S_sync(pTHX_ SV* var, SV* sync) {
@@ -732,6 +744,8 @@ int _check_layers(PerlIO* fh)
 int _get_length(PerlIO* fh, Off_t offset, SV* length)
 
 void map_handle(SV* var, PerlIO* fh, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
+
+void sys_map(SV* var, size_t length, int protection, int flags, SV* fh = undef, Off_t offset = 0)
 
 int _protection_value(SV* mode)
 
