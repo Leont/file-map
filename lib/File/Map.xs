@@ -369,7 +369,7 @@ static void add_magic(pTHX_ SV* var, struct mmap_info* magical, int writable, in
 
 static int _is_mappable(pTHX_ int fd) {
 	Stat_t info;
-	return Fstat(fd, &info) == 0 && (S_ISREG(info.st_mode) || S_ISBLK(info.st_mode));
+	return Fstat(fd, &info) == 0 && (S_ISREG(info.st_mode) || S_ISBLK(info.st_mode) || S_ISCHR(info.st_mode));
 }
 
 #define is_mappable(fd) _is_mappable(aTHX_ fd)
@@ -561,6 +561,16 @@ size_t S_get_length(pTHX_ PerlIO* fh, Off_t offset, SV* length_sv) {
 }
 #define _get_length(fh, offset, length) S_get_length(aTHX_ fh, offset, length)
 
+#define READONLY sv_2mortal(newSVpvs("<"))
+#define undef &PL_sv_undef
+
+void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_sv) {
+	size_t length = _get_length(fh, offset, length_sv);
+	int utf8 = _check_layers(fh);
+	_mmap_impl(var, length, protection_value(mode, FALSE), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
+}
+#define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)
+
 #define _protection_value(mode) protection_value(mode, FALSE);
 
 void S_sync(pTHX_ SV* var, SV* sync) {
@@ -720,6 +730,8 @@ void _mmap_impl(SV* var, size_t length, int prot, int flags, int fd, Off_t offse
 int _check_layers(PerlIO* fh)
 
 int _get_length(PerlIO* fh, Off_t offset, SV* length)
+
+void map_handle(SV* var, PerlIO* fh, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
 
 int _protection_value(SV* mode)
 
