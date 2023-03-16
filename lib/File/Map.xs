@@ -154,16 +154,6 @@ static size_t page_size() {
 
 #define die_sys(format) Perl_croak(aTHX_ format, strerror(errno))
 
-static void real_croak_sv(pTHX_ SV* value) {
-	dSP;
-	PUSHMARK(SP);
-	XPUSHs(value);
-	PUTBACK;
-	call_pv("Carp::croak", G_VOID | G_DISCARD);
-}
-#define real_croak_pvs(string) real_croak_sv(aTHX_ sv_2mortal(newSVpvs(string)))
-#define croak_sys(format) real_croak_sv(aTHX_ sv_2mortal(newSVpvf(format, strerror(errno))))
-
 #define PROT_ALL (PROT_READ | PROT_WRITE | PROT_EXEC)
 
 static void reset_var(SV* var, struct mmap_info* info) {
@@ -318,7 +308,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, Off_t 
 	file = (flags & MAP_ANONYMOUS) ? INVALID_HANDLE_VALUE : (HANDLE)_get_osfhandle(fd);
 	mapping = CreateFileMapping(file, NULL, winflags[prot].createflag, maxsize >> 32, maxsize & BITS32_MASK, NULL);
 	if (mapping == NULL)
-		croak_sys("Could not map: %s");
+		die_sys("Could not map: %s");
 	viewflag = (flags & MAP_PRIVATE) ? (FILE_MAP_COPY | ( prot & PROT_EXEC ? FILE_MAP_EXECUTE : 0 ) ) : winflags[prot].viewflag;
 	address = MapViewOfFile(mapping, viewflag, offset >> 32, offset & BITS32_MASK, length);
 	CloseHandle(mapping);
@@ -327,7 +317,7 @@ static void* do_mapping(pTHX_ size_t length, int prot, int flags, int fd, Off_t 
 	address = mmap(0, length, prot, flags | MAP_VARIABLE, fd, offset);
 	if (address == MAP_FAILED)
 #endif
-		croak_sys("Could not map: %s");
+		die_sys("Could not map: %s");
 	return address;
 }
 
@@ -495,14 +485,14 @@ static void boot(pTHX) {
 #define PTR_MAX ULONG_MAX
 #endif
 
-void S__mmap_impl(pTHX_ SV* var, size_t length, int prot, int flags, int fd, Off_t offset, int utf8) {
+void S_mmap_impl(pTHX_ SV* var, size_t length, int prot, int flags, int fd, Off_t offset, int utf8) {
 	check_new_variable(aTHX_ var);
 
 	ptrdiff_t correction = offset % page_size();
 	void* address;
 	struct mmap_info* magical;
 	if (length > PTR_MAX - correction)
-		real_croak_pvs("can't map: length + offset overflows");
+		Perl_croak(aTHX_ "can't map: length + offset overflows");
 
 	if (length)
 		address = do_mapping(aTHX_ length + correction, prot, flags, fd, offset - correction);
@@ -520,7 +510,7 @@ void S__mmap_impl(pTHX_ SV* var, size_t length, int prot, int flags, int fd, Off
 	SvSETMAGIC(var);
 	add_magic(aTHX_ var, magical, prot & PROT_WRITE, utf8);
 }
-#define _mmap_impl(var, length, prot, flags, fd, offset, utf8) S__mmap_impl(aTHX_ var, length, prot, flags, fd, offset, utf8)
+#define mmap_impl(var, length, prot, flags, fd, offset, utf8) S_mmap_impl(aTHX_ var, length, prot, flags, fd, offset, utf8)
 
 static const map mappable = {
 	{ STR_WITH_LEN("unix"), 1 },
@@ -552,7 +542,7 @@ int S_check_layers(pTHX_ PerlIO* fh) {
 	}
 	return (*fh)->flags & PERLIO_F_UTF8;
 }
-#define _check_layers(fh) S_check_layers(aTHX_ fh)
+#define check_layers(fh) S_check_layers(aTHX_ fh)
 
 size_t S_get_length(pTHX_ PerlIO* fh, Off_t offset, SV* length_sv) {
 	Stat_t info;
@@ -563,15 +553,15 @@ size_t S_get_length(pTHX_ PerlIO* fh, Off_t offset, SV* length_sv) {
 		Perl_croak(aTHX_ "Window (%ld,%lu) is outside the file", offset, length);
 	return length;
 }
-#define _get_length(fh, offset, length) S_get_length(aTHX_ fh, offset, length)
+#define get_length(fh, offset, length) S_get_length(aTHX_ fh, offset, length)
 
 #define READONLY sv_2mortal(newSVpvs("<"))
 #define undef &PL_sv_undef
 
 void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_sv) {
-	size_t length = _get_length(fh, offset, length_sv);
-	int utf8 = _check_layers(fh);
-	_mmap_impl(var, length, protection_sv(mode), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
+	size_t length = get_length(fh, offset, length_sv);
+	int utf8 = check_layers(fh);
+	mmap_impl(var, length, protection_sv(mode), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
 }
 #define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)
 
@@ -602,23 +592,21 @@ void S_map_anonymous(pTHX_ SV* var, size_t length, const char* flag_name) {
 		Perl_croak(aTHX_ "No such flag '%s'", flag_name);
 	if (length == 0)
 		Perl_croak(aTHX_ "Zero length specified for anonymous map");
-	_mmap_impl(var, length, PROT_READ | PROT_WRITE, flag | MAP_ANONYMOUS, -1, 0, 0);
+	mmap_impl(var, length, PROT_READ | PROT_WRITE, flag | MAP_ANONYMOUS, -1, 0, 0);
 }
 #define map_anonymous(var, length, flag_name) S_map_anonymous(aTHX_ var, length, flag_name)
 
 void S_sys_map(pTHX_ SV* var, size_t length, int protection, int flags, SV* fh, Off_t offset) {
 	if (flags & MAP_ANONYMOUS)
-		_mmap_impl(var, length, protection, flags, -1, offset, 0);
+		mmap_impl(var, length, protection, flags, -1, offset, 0);
 	else {
 		PerlIO* pio = IoIFP(sv_2io(fh)); // XXX error check
-		int utf8 = _check_layers(pio);
+		int utf8 = check_layers(pio);
 		int fd = PerlIO_fileno(pio);
-		_mmap_impl(var, length, protection, flags, fd, offset, utf8);
+		mmap_impl(var, length, protection, flags, fd, offset, utf8);
 	}
 }
 #define sys_map(var, length, protection, flags, fh, offset) S_sys_map(aTHX_ var, length, protection, flags, fh, offset)
-
-#define _protection_value(mode, modelen) protection_pvn(mode, modelen);
 
 void S_sync(pTHX_ SV* var, SV* sync) {
 	struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
@@ -772,12 +760,6 @@ PROTOTYPES: DISABLED
 BOOT:
     boot(aTHX);
 
-void _mmap_impl(SV* var, size_t length, int prot, int flags, int fd, Off_t offset, int utf8 = 0)
-
-int _check_layers(PerlIO* fh)
-
-int _get_length(PerlIO* fh, Off_t offset, SV* length)
-
 void map_file(SV* var, SV* filename, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
 
 void map_handle(SV* var, PerlIO* fh, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
@@ -785,8 +767,6 @@ void map_handle(SV* var, PerlIO* fh, SV* mode = READONLY, Off_t offset = 0, SV* 
 void map_anonymous(SV* var, size_t length, const char* flag_name = "shared")
 
 void sys_map(SV* var, size_t length, int protection, int flags, SV* fh = undef, Off_t offset = 0)
-
-int _protection_value(const char* mode, size_t length(mode))
 
 void sync(SV* var, SV* sync = YES)
 

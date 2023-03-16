@@ -8,11 +8,9 @@ package File::Map;
 use 5.008;
 use strict;
 use warnings FATAL => 'all';
-use subs qw{PROT_READ PROT_WRITE MAP_PRIVATE MAP_SHARED MAP_FILE MAP_ANONYMOUS};
 
 use Sub::Exporter::Progressive 0.001005 ();
 use XSLoader ();
-use Carp qw/croak carp/;
 
 XSLoader::load('File::Map', File::Map->VERSION);
 
@@ -23,22 +21,16 @@ my %export_data = (
 	constants => [qw/PROT_NONE PROT_READ PROT_WRITE PROT_EXEC MAP_ANONYMOUS MAP_SHARED MAP_PRIVATE MAP_ANON MAP_FILE/]
 );
 
-{
-	my (@export_ok, %export_tags);
+my (@export_ok, %export_tags);
 
-	while (my ($category, $functions) = each %export_data) {
-		for my $function (grep { defined &{$_} } @{$functions}) {
-			push @export_ok, $function;
-			push @{ $export_tags{$category} }, $function;
-		}
+while (my ($category, $functions) = each %export_data) {
+	for my $function (grep { defined &{$_} } @{$functions}) {
+		push @export_ok, $function;
+		push @{ $export_tags{$category} }, $function;
 	}
-
-	Sub::Exporter::Progressive->import(-setup => { exports => \@export_ok, groups => \%export_tags });
 }
 
-my $anon_fh = -1;
-
-## no critic (Subroutines::RequireArgUnpacking)
+Sub::Exporter::Progressive->import(-setup => { exports => \@export_ok, groups => \%export_tags });
 
 1;
 
@@ -310,7 +302,7 @@ Overwriting an empty map is rather nonsensical, hence a warning is given when th
 
 =head1 DEPENDENCIES
 
-This module depends on perl 5.8, L<Sub::Exporter::Progressive> and L<PerlIO::Layers>. Perl 5.8.8 or higher is recommended because older versions can give spurious warnings.
+This module depends on perl 5.8 and L<Sub::Exporter::Progressive>. Perl 5.8.8 or higher is recommended because older versions can give spurious warnings.
 
 In perl versions before 5.11.5 many string functions including C<substr> are limited to L<32bit logic|http://rt.perl.org/rt3//Public/Bug/Display.html?id=72784>, even on 64bit architectures. Effectively this means you can't use them on strings bigger than 2GB. If you are working with such large files, it is strongly recommended to upgrade to 5.12.
 
