@@ -61,6 +61,8 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#define NEED_mg_findext
+#define NEED_sv_unmagicext
 #include "ppport.h"
 
 #ifndef SvPV_free
@@ -291,8 +293,8 @@ static void check_new_variable(pTHX_ SV* var) {
 	SV_CHECK_THINKFIRST_COW_DROP(var);
 	if (SvREADONLY(var))
 		Perl_croak(aTHX_ "%s", PL_no_modify);
-	if (SvMAGICAL(var) && mg_find(var, PERL_MAGIC_uvar))
-		sv_unmagic(var, PERL_MAGIC_uvar);
+	if (SvMAGICAL(var) && mg_findext(var, PERL_MAGIC_ext, &mmap_table))
+		sv_unmagicext(var, PERL_MAGIC_ext, (MGVTBL*)&mmap_table);
 	if (SvROK(var))
 		sv_unref_flags(var, SV_IMMEDIATE_UNREF);
 	if (SvNIOK(var))
@@ -350,7 +352,7 @@ static struct mmap_info* initialize_mmap_info(pTHX_ void* address, size_t length
 }
 
 static void add_magic(pTHX_ SV* var, struct mmap_info* magical, int writable, int utf8) {
-	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_uvar, &mmap_table, (const char*) magical, 0);
+	MAGIC* magic = sv_magicext(var, NULL, PERL_MAGIC_ext, &mmap_table, (const char*) magical, 0);
 #ifdef MGf_LOCAL
 	magic->mg_flags |= MGf_LOCAL;
 #endif
@@ -373,7 +375,7 @@ static int _is_mappable(pTHX_ int fd) {
 
 static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	MAGIC* magic;
-	if (!SvMAGICAL(var) || (magic = mg_find(var, PERL_MAGIC_uvar)) == NULL || magic->mg_virtual != &mmap_table)
+	if (!SvMAGICAL(var) || (magic = mg_findext(var, PERL_MAGIC_ext, &mmap_table)) == NULL)
 		Perl_croak(aTHX_ "Could not %s: this variable is not memory mapped", funcname);
 	return (struct mmap_info*) magic->mg_ptr;
 }
@@ -587,7 +589,7 @@ unmap(var)
 	SV* var;
 	CODE: 
 		get_mmap_magic(aTHX_ var, "unmap");
-		sv_unmagic(var, PERL_MAGIC_uvar);
+		sv_unmagicext(var, PERL_MAGIC_ext, (MGVTBL*)&mmap_table);
 
 void
 pin(var)
