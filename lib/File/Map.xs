@@ -411,7 +411,8 @@ static int S_protection_pvn(pTHX_ const char* mode, size_t mode_len) {
 static int S_protection_sv(pTHX_ SV* mode_sv) {
 	STRLEN mode_len;
 	const char* mode = SvPV(mode_sv, mode_len);
-	return protection_pvn(mode, mode_len);
+	const char* end = memchr(mode, ':', mode_len);
+	return protection_pvn(mode, end ? end - mode : mode_len);
 }
 #define protection_sv(mode) S_protection_sv(aTHX_ mode)
 
@@ -573,6 +574,22 @@ void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_
 	_mmap_impl(var, length, protection_sv(mode), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
 }
 #define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)
+
+void S_map_file(pTHX_ SV* var, SV* filename, SV* mode, Off_t offset, SV* length_sv) {
+	STRLEN mode_len;
+	const char* mode_raw = SvPV(mode, mode_len);
+	if (memchr(mode_raw, ':', mode_len) == NULL) {
+		SV* newmode = sv_2mortal(newSVsv(mode));
+		sv_catpvs(newmode, ":raw");
+		mode_raw = SvPV(newmode, mode_len);
+	}
+	GV* gv = MUTABLE_GV(sv_2mortal(newSV_type(SVt_NULL)));
+	gv_init_pv(gv, CopSTASH(PL_curcop),  "__ANONIO__", 0);
+	if (!do_openn(gv, mode_raw, mode_len, 0, 0, 0, NULL, &filename, 1))
+		Perl_croak(aTHX_ "Couldn't open file %s: %s", SvPV_nolen(filename), strerror(errno));
+	map_handle(var, IoIFP(GvIO(gv)), mode, offset, length_sv);
+}
+#define map_file(var, filename, mode, offset, length) S_map_file(aTHX_ var, filename, mode, offset, length)
 
 static const map flags = {
 	{ STR_WITH_LEN("shared") , MAP_SHARED },
@@ -760,6 +777,8 @@ void _mmap_impl(SV* var, size_t length, int prot, int flags, int fd, Off_t offse
 int _check_layers(PerlIO* fh)
 
 int _get_length(PerlIO* fh, Off_t offset, SV* length)
+
+void map_file(SV* var, SV* filename, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
 
 void map_handle(SV* var, PerlIO* fh, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
 

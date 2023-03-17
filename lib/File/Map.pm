@@ -40,20 +40,6 @@ my $anon_fh = -1;
 
 ## no critic (Subroutines::RequireArgUnpacking)
 
-sub map_file {
-	my (undef, $filename, $mode, $offset, $length) = @_;
-	$mode ||= '<';
-	my ($minimode, $encoding) = $mode =~ / \A ([^:]+) ([:\w-]+)? \z /xms;
-	$encoding = ':raw' if not defined $encoding;
-	open my $fh, $minimode.$encoding, $filename or croak "Couldn't open file $filename: $!";
-	my $utf8 = _check_layers($fh);
-	$offset ||= 0;
-	$length = _get_length($fh, $offset, $length);
-	_mmap_impl($_[0], $length, _protection_value($minimode), MAP_SHARED | MAP_FILE, fileno $fh, $offset, $utf8);
-	close $fh or croak "Couldn't close $filename after mapping: $!";
-	return;
-}
-
 1;
 
 #ABSTRACT: Memory mapping made simple and safe.
