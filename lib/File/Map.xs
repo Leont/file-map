@@ -398,19 +398,22 @@ static map prots = {
 	{ STR_WITH_LEN("+>"), PROT_READ | PROT_WRITE },
 };
 
-static int S_protection_value(pTHX_ SV* mode, int fallback) {
+static int S_protection_pvn(pTHX_ const char* mode, size_t mode_len) {
 	int i;
-	STRLEN len;
-	const char* value = SvPV(mode, len);
 	for (i = 0; i < sizeof prots / sizeof *prots; ++i) {
-		if (prots[i].length == len && strEQ(value, prots[i].key))
+		if (prots[i].length == mode_len && strnEQ(mode, prots[i].key, mode_len))
 			return prots[i].value;
 	}
-	if (fallback && SvIOK(mode))
-		return SvIV(mode);
-	Perl_croak(aTHX_ "No such mode '%s' known", SvPV_nolen(mode));
+	Perl_croak(aTHX_ "No such mode '%s' known", mode);
 }
-#define protection_value(prot, fallback) S_protection_value(aTHX_ prot, fallback)
+#define protection_pvn(mode, mode_len) S_protection_pvn(aTHX_ mode, mode_len)
+
+static int S_protection_sv(pTHX_ SV* mode_sv) {
+	STRLEN mode_len;
+	const char* mode = SvPV(mode_sv, mode_len);
+	return protection_pvn(mode, mode_len);
+}
+#define protection_sv(mode) S_protection_sv(aTHX_ mode)
 
 #define YES &PL_sv_yes
 
@@ -567,7 +570,7 @@ size_t S_get_length(pTHX_ PerlIO* fh, Off_t offset, SV* length_sv) {
 void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_sv) {
 	size_t length = _get_length(fh, offset, length_sv);
 	int utf8 = _check_layers(fh);
-	_mmap_impl(var, length, protection_value(mode, FALSE), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
+	_mmap_impl(var, length, protection_sv(mode), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
 }
 #define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)
 
@@ -598,7 +601,7 @@ void S_sys_map(pTHX_ SV* var, size_t length, int protection, int flags, SV* fh, 
 }
 #define sys_map(var, length, protection, flags, fh, offset) S_sys_map(aTHX_ var, length, protection, flags, fh, offset)
 
-#define _protection_value(mode) protection_value(mode, FALSE);
+#define _protection_value(mode, modelen) protection_pvn(mode, modelen);
 
 void S_sync(pTHX_ SV* var, SV* sync) {
 	struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
@@ -686,7 +689,7 @@ void S_advise(pTHX_ SV* var, SV* name) {
 
 void S_protect(pTHX_ SV* var, SV* prot) {
 	struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
-	int prot_val = protection_value(prot, TRUE);
+	int prot_val = SvIOK(prot) ? SvIV(prot) : protection_sv(prot);
 	if (!EMPTY_MAP(info))
 		mprotect(info->real_address, info->real_length, prot_val);
 	if (prot_val & PROT_WRITE)
@@ -764,7 +767,7 @@ void map_anonymous(SV* var, size_t length, const char* flag_name = "shared")
 
 void sys_map(SV* var, size_t length, int protection, int flags, SV* fh = undef, Off_t offset = 0)
 
-int _protection_value(SV* mode)
+int _protection_value(const char* mode, size_t length(mode))
 
 void sync(SV* var, SV* sync = YES)
 
