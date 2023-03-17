@@ -571,6 +571,21 @@ void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_
 }
 #define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)
 
+static const map flags = {
+	{ STR_WITH_LEN("shared") , MAP_SHARED },
+	{ STR_WITH_LEN("private"), MAP_PRIVATE },
+};
+
+void S_map_anonymous(pTHX_ SV* var, size_t length, const char* flag_name) {
+	int flag = map_get(flags, flag_name, -1);
+	if (flag == -1)
+		Perl_croak(aTHX_ "No such flag '%s'", flag_name);
+	if (length == 0)
+		Perl_croak(aTHX_ "Zero length specified for anonymous map");
+	_mmap_impl(var, length, PROT_READ | PROT_WRITE, flag | MAP_ANONYMOUS, -1, 0, 0);
+}
+#define map_anonymous(var, length, flag_name) S_map_anonymous(aTHX_ var, length, flag_name)
+
 void S_sys_map(pTHX_ SV* var, size_t length, int protection, int flags, SV* fh, Off_t offset) {
 	if (flags & MAP_ANONYMOUS)
 		_mmap_impl(var, length, protection, flags, -1, offset, 0);
@@ -744,6 +759,8 @@ int _check_layers(PerlIO* fh)
 int _get_length(PerlIO* fh, Off_t offset, SV* length)
 
 void map_handle(SV* var, PerlIO* fh, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
+
+void map_anonymous(SV* var, size_t length, const char* flag_name = "shared")
 
 void sys_map(SV* var, size_t length, int protection, int flags, SV* fh = undef, Off_t offset = 0)
 

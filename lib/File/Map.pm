@@ -54,19 +54,6 @@ sub map_file {
 	return;
 }
 
-my %flag_for = (
-	private => MAP_PRIVATE,
-	shared  => MAP_SHARED,
-);
-sub map_anonymous {
-	my (undef, $length, $flag_name) = @_;
-	my $flag = $flag_for{ $flag_name || 'shared' };
-	croak "No such flag '$flag_name'" if not defined $flag;
-	croak 'Zero length specified for anonymous map' if $length == 0;
-	_mmap_impl($_[0], $length, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | $flag, $anon_fh, 0);
-	return;
-}
-
 1;
 
 #ABSTRACT: Memory mapping made simple and safe.
