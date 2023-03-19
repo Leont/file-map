@@ -48,8 +48,8 @@ sub _check_layers {
 	return query_handle($fh, 'utf8');
 }
 
-sub _get_offset_length {
-	my ($offset, $length, $fh) = @_;
+sub _get_length {
+	my ($fh, $offset, $length) = @_;
 
 	my $size = -s $fh;
 	$offset ||= 0;
@@ -64,7 +64,8 @@ sub _get_offset_length {
 sub map_handle {
 	my (undef, $fh, $mode, $offset, $length) = @_;
 	my $utf8 = _check_layers($fh);
-	($offset, $length) = _get_offset_length($offset, $length, $fh);
+	$offset ||= 0;
+	$length = _get_length($fh, $offset, $length);
 	_mmap_impl($_[0], $length, _protection_value($mode || '<'), MAP_SHARED | MAP_FILE, fileno $fh, $offset, $utf8);
 	return;
 }
@@ -76,7 +77,8 @@ sub map_file {
 	$encoding = ':raw' if not defined $encoding;
 	open my $fh, $minimode.$encoding, $filename or croak "Couldn't open file $filename: $!";
 	my $utf8 = _check_layers($fh);
-	($offset, $length) = _get_offset_length($offset, $length, $fh);
+	$offset ||= 0;
+	$length = _get_length($fh, $offset, $length);
 	_mmap_impl($_[0], $length, _protection_value($minimode), MAP_SHARED | MAP_FILE, fileno $fh, $offset, $utf8);
 	close $fh or croak "Couldn't close $filename after mapping: $!";
 	return;
