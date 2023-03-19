@@ -550,6 +550,17 @@ int S_check_layers(pTHX_ PerlIO* fh) {
 }
 #define _check_layers(fh) S_check_layers(aTHX_ fh)
 
+size_t S_get_length(pTHX_ PerlIO* fh, Off_t offset, SV* length_sv) {
+	Stat_t info;
+	Fstat(PerlIO_fileno(fh), &info);
+	size_t length = SvOK(length_sv) ? SvIV(length_sv) : info.st_size - offset;
+	size_t end = offset + length;
+	if (offset < 0 || end > info.st_size && !S_ISCHR(info.st_mode))
+		Perl_croak(aTHX_ "Window (%ld,%lu) is outside the file", offset, length);
+	return length;
+}
+#define _get_length(fh, offset, length) S_get_length(aTHX_ fh, offset, length)
+
 #define _protection_value(mode) protection_value(mode, FALSE);
 
 void S_sync(pTHX_ SV* var, SV* sync) {
@@ -707,6 +718,8 @@ BOOT:
 void _mmap_impl(SV* var, size_t length, int prot, int flags, int fd, Off_t offset, int utf8 = 0)
 
 int _check_layers(PerlIO* fh)
+
+int _get_length(PerlIO* fh, Off_t offset, SV* length)
 
 int _protection_value(SV* mode)
 

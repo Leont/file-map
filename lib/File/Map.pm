@@ -38,17 +38,6 @@ my %export_data = (
 
 my $anon_fh = -1;
 
-sub _get_length {
-	my ($fh, $offset, $length) = @_;
-
-	my $size = -s $fh;
-	$offset ||= 0;
-	$length ||= $size - $offset;
-	my $end = $offset + $length;
-	croak "Window ($offset,$end) is outside the file" if $offset < 0 or $end > $size and not -c _;
-	return ($offset, $length);
-}
-
 ## no critic (Subroutines::RequireArgUnpacking)
 
 sub map_handle {
