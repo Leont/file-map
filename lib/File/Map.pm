@@ -13,7 +13,6 @@ use subs qw{PROT_READ PROT_WRITE MAP_PRIVATE MAP_SHARED MAP_FILE MAP_ANONYMOUS};
 use Sub::Exporter::Progressive 0.001005 ();
 use XSLoader ();
 use Carp qw/croak carp/;
-use PerlIO::Layers qw/query_handle/;
 
 XSLoader::load('File::Map', File::Map->VERSION);
 
@@ -38,15 +37,6 @@ my %export_data = (
 }
 
 my $anon_fh = -1;
-
-sub _check_layers {
-	my $fh = shift;
-	croak "Can't map fake filehandle" if fileno $fh < 0;
-	if (warnings::enabled('layer')) {
-		carp "Shouldn't map non-binary filehandle" if not query_handle($fh, 'mappable');
-	}
-	return query_handle($fh, 'utf8');
-}
 
 sub _get_length {
 	my ($fh, $offset, $length) = @_;

@@ -61,6 +61,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "perliol.h"
 #define NEED_mg_findext
 #define NEED_sv_unmagicext
 #include "ppport.h"
@@ -517,6 +518,38 @@ void S__mmap_impl(pTHX_ SV* var, size_t length, int prot, int flags, int fd, Off
 }
 #define _mmap_impl(var, length, prot, flags, fd, offset, utf8) S__mmap_impl(aTHX_ var, length, prot, flags, fd, offset, utf8)
 
+static const map mappable = {
+	{ STR_WITH_LEN("unix"), 1 },
+	{ STR_WITH_LEN("perlio"), 1 },
+	{ STR_WITH_LEN("crlf"), 1 },
+	{ STR_WITH_LEN("stdio"), 1 },
+	{ STR_WITH_LEN("flock"), 1 },
+	{ STR_WITH_LEN("creat"), 1 },
+	{ STR_WITH_LEN("mmap"), 1 },
+};
+
+static int S_map_get(pTHX_ const map table, size_t table_size, const char* name, int fallback) {
+	int i;
+	for (i = 0; i < table_size; ++i) {
+		if (strEQ(name, table[i].key))
+			return table[i].value;
+	}
+	return fallback;
+}
+#define map_get(table, name, default) S_map_get(aTHX_ table, sizeof table / sizeof *table, name, default)
+
+int S_check_layers(pTHX_ PerlIO* fh) {
+	PerlIO* current;
+	if (PerlIO_fileno(fh) < 0)
+		Perl_croak(aTHX_ "Can't map fake filehandle");
+	for (current = fh; *current; current = PerlIONext(current)) {
+		if (!map_get(mappable, (*current)->tab->name, 0) || (*current)->flags & PERLIO_F_CRLF)
+			Perl_croak(aTHX_ "Shouldn't map non-binary filehandle");
+	}
+	return (*fh)->flags & PERLIO_F_UTF8;
+}
+#define _check_layers(fh) S_check_layers(aTHX_ fh)
+
 #define _protection_value(mode) protection_value(mode, FALSE);
 
 void S_sync(pTHX_ SV* var, SV* sync) {
@@ -672,6 +705,8 @@ BOOT:
     boot(aTHX);
 
 void _mmap_impl(SV* var, size_t length, int prot, int flags, int fd, Off_t offset, int utf8 = 0)
+
+int _check_layers(PerlIO* fh)
 
 int _protection_value(SV* mode)
 
