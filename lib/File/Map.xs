@@ -139,7 +139,7 @@ static size_t page_size() {
 }
 #endif
 
-#ifdef VMS
+#if defined(VMS) || defined(__GNU__)
 #define madvise(address, length, advice) 0
 #endif
 
