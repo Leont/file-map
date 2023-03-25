@@ -1,6 +1,8 @@
 Revision history for File-Map
 
 {{$NEXT}}
+
+0.68      2023-03-25 10:32:11+01:00 Europe/Amsterdam
           - Re-eliminate second magic vtable
           - Eliminate all CODE blocks in XS
 
