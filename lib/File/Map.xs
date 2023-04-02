@@ -574,7 +574,7 @@ void S_map_file(pTHX_ SV* var, SV* filename, SV* mode, Off_t offset, SV* length_
 		mode_raw = SvPV(newmode, mode_len);
 	}
 	GV* gv = MUTABLE_GV(sv_2mortal(newSV_type(SVt_NULL)));
-	gv_init_pv(gv, CopSTASH(PL_curcop),  "__ANONIO__", 0);
+	gv_init_pvn(gv, CopSTASH(PL_curcop),  "__ANONIO__", 10, GV_ADDMULTI);
 	if (!do_openn(gv, mode_raw, mode_len, 0, 0, 0, NULL, &filename, 1))
 		Perl_croak(aTHX_ "Couldn't open file %s: %s", SvPV_nolen(filename), strerror(errno));
 	map_handle(var, IoIFP(GvIO(gv)), mode, offset, length_sv);
