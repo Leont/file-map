@@ -1,6 +1,10 @@
 TYPEMAP
 Off_t	T_OFFT
+struct mmap_info* T_MMAP_INFO
 
 INPUT
 T_OFFT
 	$var = ($type)sv_to_offset($arg)
+
+T_MMAP_INFO
+	$var = get_mmap_magic($arg, \"$func_name\")

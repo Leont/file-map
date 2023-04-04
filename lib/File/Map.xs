@@ -527,8 +527,7 @@ void S_unmap(pTHX_ SV* var) {
 }
 #define unmap(var) S_unmap(aTHX_ var)
 
-void S_pin(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(var, "pin");
+void S_pin(pTHX_ struct mmap_info* info) {
 #ifndef VMS
 	if (EMPTY_MAP(info))
 		return;
@@ -540,8 +539,7 @@ void S_pin(pTHX_ SV* var) {
 }
 #define pin(var) S_pin(aTHX_ var)
 
-void S_unpin(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(var, "unpin");
+void S_unpin(pTHX_ struct mmap_info* info) {
 #ifndef VMS
 	if (EMPTY_MAP(info))
 		return;
@@ -553,9 +551,7 @@ void S_unpin(pTHX_ SV* var) {
 }
 #define unpin(var) S_unpin(aTHX_ var)
 
-void S_advise(pTHX_ SV* var, SV* name) {
-	struct mmap_info* info = get_mmap_magic(var, "advise");
-
+void S_advise(pTHX_ struct mmap_info* info, SV* name) {
 	HV* constants = (HV*) *hv_fetch(PL_modglobal, "File::Map::ADVISE_CONSTANTS", 27, 0);
 	HE* value = hv_fetch_ent(constants, name, 0, 0);
 
@@ -582,8 +578,7 @@ void S_protect(pTHX_ SV* var, SV* prot) {
 }
 #define protect(var, prot) S_protect(aTHX_ var, prot)
 
-void S_lock_map(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(var, "lock_map");
+void S_lock_map(pTHX_ struct mmap_info* info) {
 #ifdef USE_ITHREADS
 	LEAVE;
 	SAVEDESTRUCTOR_X(magic_end, info);
@@ -614,16 +609,14 @@ SV* S_wait_until(pTHX_ SV* block, SV* var) {
 }
 #define wait_until(block, var) S_wait_until(aTHX_ block, var)
 
-void S_notify(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(var, "notify");
+void S_notify(pTHX_ struct mmap_info* info) {
 	if (info->owner != aTHX)
 		Perl_croak(aTHX_ "Trying to notify on an unlocked map");
 	COND_SIGNAL(&info->cond);
 }
 #define notify(var) S_notify(aTHX_ var)
 
-void S_broadcast(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(var, "broadcast");
+void S_broadcast(pTHX_ struct mmap_info* info) {
 	if (info->owner != aTHX)
 		Perl_croak(aTHX_ "Trying to broadcast on an unlocked map");
 	COND_BROADCAST(&info->cond);
@@ -655,22 +648,22 @@ void remap(SV* var, size_t new_size)
 
 void unmap(SV* var)
 
-void pin(SV* var)
+void pin(struct mmap_info* var)
 
-void unpin(SV* var)
+void unpin(struct mmap_info* var)
 
-void advise(SV* var, SV* name)
+void advise(struct mmap_info* var, SV* name)
 
 void protect(SV* var, SV* prot)
 
-void lock_map(SV* var)
+void lock_map(struct mmap_info* var)
 
 #ifdef USE_ITHREADS
 SV* wait_until(SV* block, SV* var)
 	PROTOTYPE: &@
 
-void notify(SV* var)
+void notify(struct mmap_info* var)
 
-void broadcast(SV* var)
+void broadcast(struct mmap_info* var)
 
 #endif /* USE ITHREADS */
