@@ -59,7 +59,7 @@ static void reset_var(SV* var, struct mmap_info* info) {
 	SvPOK_only_UTF8(var);
 }
 
-static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string, STRLEN len) {
+static void S_mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string, STRLEN len) {
 	if (ckWARN(WARN_SUBSTR)) {
 		Perl_warn(aTHX_ "Writing directly to a memory mapped file is not recommended");
 		if (SvCUR(var) > info->fake_length)
@@ -75,19 +75,20 @@ static void mmap_fixup(pTHX_ SV* var, struct mmap_info* info, const char* string
 		SvPV_free(var);
 	reset_var(var, info);
 }
+#define mmap_fixup(var, info, string, len) S_mmap_fixup(aTHX_ var, info, string, len)
 
 static int mmap_write(pTHX_ SV* var, MAGIC* magic) {
 	struct mmap_info* info = (struct mmap_info*) magic->mg_ptr;
 	if (info->real_length) {
 		if (!SvOK(var))
-			mmap_fixup(aTHX_ var, info, NULL, 0);
+			mmap_fixup(var, info, NULL, 0);
 		else if (!SvPOK(var)) {
 			STRLEN len;
 			const char* string = SvPV(var, len);
-			mmap_fixup(aTHX_ var, info, string, len);
+			mmap_fixup(var, info, string, len);
 		}
 		else if (SvPVX(var) != info->fake_address)
-			mmap_fixup(aTHX_ var, info, SvPVX(var), SvCUR(var));
+			mmap_fixup(var, info, SvPVX(var), SvCUR(var));
 		else {
 			if (ckWARN(WARN_SUBSTR) && SvCUR(var) != info->fake_length) {
 				Perl_warn(aTHX_ "Writing directly to a memory mapped file is not recommended");
