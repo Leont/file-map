@@ -291,7 +291,7 @@ static int S_protection_sv(pTHX_ SV* mode_sv) {
 
 #define EMPTY_MAP(info) ((info)->real_length == 0)
 
-static void boot(pTHX) {
+static void S_boot(pTHX) {
 	HV* stash = get_hv("File::Map::", FALSE);
 	HV* advise_constants = newHV();
 
@@ -352,6 +352,7 @@ static void boot(pTHX) {
 	ADVISE_CONSTANT("spaceavail", MADV_SPACEAVAIL);
 #endif
 }
+#define boot() S_boot(aTHX)
 
 #if PTRSIZE == 8 && (defined(WIN32) || defined(__CYGWIN__))
 #ifndef ULLONG_MAX
@@ -636,7 +637,7 @@ MODULE = File::Map				PACKAGE = File::Map
 PROTOTYPES: DISABLED
 
 BOOT:
-    boot(aTHX);
+    boot();
 
 void map_file(SV* var, SV* filename, SV* mode = READONLY, Off_t offset = 0, SV* length = undef)
 
