@@ -284,8 +284,6 @@ static int S_protection_sv(pTHX_ SV* mode_sv) {
 }
 #define protection_sv(mode) S_protection_sv(aTHX_ mode)
 
-#define YES &PL_sv_yes
-
 #define MAP_CONSTANT(cons) newCONSTSUB(stash, #cons, newSVuv(cons))
 #define ADVISE_CONSTANT(key, value) hv_store(advise_constants, key, sizeof key - 1, newSVuv(value), 0)
 
@@ -487,13 +485,13 @@ void S_sys_map(pTHX_ SV* var, size_t length, int protection, int flags, SV* fh, 
 }
 #define sys_map(var, length, protection, flags, fh, offset) S_sys_map(aTHX_ var, length, protection, flags, fh, offset)
 
-void S_sync(pTHX_ SV* var, SV* sync) {
+void S_sync(pTHX_ SV* var, bool sync) {
 	struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
 	if (EMPTY_MAP(info))
 		return;
 	if (SvREADONLY(var) && ckWARN(WARN_IO))
 		Perl_warn(aTHX_ "Syncing a readonly map makes no sense");
-	if (msync(info->real_address, info->real_length, SvTRUE(sync) ? MS_SYNC : MS_ASYNC ) == -1)
+	if (msync(info->real_address, info->real_length, sync ? MS_SYNC : MS_ASYNC ) == -1)
 		die_sys("Could not sync: %s");
 }
 #define sync(var, sync) S_sync(aTHX_ var, sync)
@@ -647,7 +645,7 @@ void map_anonymous(SV* var, size_t length, const char* flag_name = "shared")
 
 void sys_map(SV* var, size_t length, int protection, int flags, SV* fh = undef, Off_t offset = 0)
 
-void sync(SV* var, SV* sync = YES)
+void sync(SV* var, bool sync = TRUE)
 
 #ifdef __linux__
 void remap(SV* var, size_t new_size)
