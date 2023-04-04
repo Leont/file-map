@@ -242,12 +242,13 @@ static int _is_mappable(pTHX_ int fd) {
 
 #define is_mappable(fd) _is_mappable(aTHX_ fd)
 
-static struct mmap_info* get_mmap_magic(pTHX_ SV* var, const char* funcname) {
+static struct mmap_info* S_get_mmap_magic(pTHX_ SV* var, const char* funcname) {
 	MAGIC* magic;
 	if (!SvMAGICAL(var) || (magic = mg_findext(var, PERL_MAGIC_ext, &mmap_table)) == NULL)
 		Perl_croak(aTHX_ "Could not %s: this variable is not memory mapped", funcname);
 	return (struct mmap_info*) magic->mg_ptr;
 }
+#define get_mmap_magic(var, funcname) S_get_mmap_magic(aTHX_ var, funcname)
 
 #ifdef USE_ITHREADS
 static void magic_end(pTHX_ void* pre_info) {
@@ -486,7 +487,7 @@ void S_sys_map(pTHX_ SV* var, size_t length, int protection, int flags, SV* fh, 
 #define sys_map(var, length, protection, flags, fh, offset) S_sys_map(aTHX_ var, length, protection, flags, fh, offset)
 
 void S_sync(pTHX_ SV* var, bool sync) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "sync");
+	struct mmap_info* info = get_mmap_magic(var, "sync");
 	if (EMPTY_MAP(info))
 		return;
 	if (SvREADONLY(var) && ckWARN(WARN_IO))
@@ -498,7 +499,7 @@ void S_sync(pTHX_ SV* var, bool sync) {
 
 #ifdef __linux__
 void S_remap(pTHX_ SV* var, size_t new_size) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "remap");
+	struct mmap_info* info = get_mmap_magic(var, "remap");
 	ptrdiff_t correction = info->real_length - info->fake_length;
 	void* new_address;
 CODE:
@@ -521,13 +522,13 @@ CODE:
 #endif
 
 void S_unmap(pTHX_ SV* var) {
-	get_mmap_magic(aTHX_ var, "unmap");
+	get_mmap_magic(var, "unmap");
 	sv_unmagicext(var, PERL_MAGIC_ext, (MGVTBL*)&mmap_table);
 }
 #define unmap(var) S_unmap(aTHX_ var)
 
 void S_pin(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "pin");
+	struct mmap_info* info = get_mmap_magic(var, "pin");
 #ifndef VMS
 	if (EMPTY_MAP(info))
 		return;
@@ -540,7 +541,7 @@ void S_pin(pTHX_ SV* var) {
 #define pin(var) S_pin(aTHX_ var)
 
 void S_unpin(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "unpin");
+	struct mmap_info* info = get_mmap_magic(var, "unpin");
 #ifndef VMS
 	if (EMPTY_MAP(info))
 		return;
@@ -553,7 +554,7 @@ void S_unpin(pTHX_ SV* var) {
 #define unpin(var) S_unpin(aTHX_ var)
 
 void S_advise(pTHX_ SV* var, SV* name) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "advise");
+	struct mmap_info* info = get_mmap_magic(var, "advise");
 
 	HV* constants = (HV*) *hv_fetch(PL_modglobal, "File::Map::ADVISE_CONSTANTS", 27, 0);
 	HE* value = hv_fetch_ent(constants, name, 0, 0);
@@ -570,7 +571,7 @@ void S_advise(pTHX_ SV* var, SV* name) {
 #define advise(var, name) S_advise(aTHX_ var, name)
 
 void S_protect(pTHX_ SV* var, SV* prot) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "protect");
+	struct mmap_info* info = get_mmap_magic(var, "protect");
 	int prot_val = SvIOK(prot) ? SvIV(prot) : protection_sv(prot);
 	if (!EMPTY_MAP(info))
 		mprotect(info->real_address, info->real_length, prot_val);
@@ -582,7 +583,7 @@ void S_protect(pTHX_ SV* var, SV* prot) {
 #define protect(var, prot) S_protect(aTHX_ var, prot)
 
 void S_lock_map(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "lock_map");
+	struct mmap_info* info = get_mmap_magic(var, "lock_map");
 #ifdef USE_ITHREADS
 	LEAVE;
 	SAVEDESTRUCTOR_X(magic_end, info);
@@ -595,7 +596,7 @@ void S_lock_map(pTHX_ SV* var) {
 
 #ifdef USE_ITHREADS
 SV* S_wait_until(pTHX_ SV* block, SV* var) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "wait_until");
+	struct mmap_info* info = get_mmap_magic(var, "wait_until");
 	if (info->owner != aTHX)
 		Perl_croak(aTHX_ "Trying to wait on an unlocked map");
 	SAVESPTR(DEFSV);
@@ -614,7 +615,7 @@ SV* S_wait_until(pTHX_ SV* block, SV* var) {
 #define wait_until(block, var) S_wait_until(aTHX_ block, var)
 
 void S_notify(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "notify");
+	struct mmap_info* info = get_mmap_magic(var, "notify");
 	if (info->owner != aTHX)
 		Perl_croak(aTHX_ "Trying to notify on an unlocked map");
 	COND_SIGNAL(&info->cond);
@@ -622,7 +623,7 @@ void S_notify(pTHX_ SV* var) {
 #define notify(var) S_notify(aTHX_ var)
 
 void S_broadcast(pTHX_ SV* var) {
-	struct mmap_info* info = get_mmap_magic(aTHX_ var, "broadcast");
+	struct mmap_info* info = get_mmap_magic(var, "broadcast");
 	if (info->owner != aTHX)
 		Perl_croak(aTHX_ "Trying to broadcast on an unlocked map");
 	COND_BROADCAST(&info->cond);
