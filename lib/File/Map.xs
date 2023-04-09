@@ -438,8 +438,8 @@ size_t S_get_length(pTHX_ PerlIO* fh, Off_t offset, SV* length_sv) {
 #define undef &PL_sv_undef
 
 void S_map_handle(pTHX_ SV* var, PerlIO* fh, SV* mode, Off_t offset, SV* length_sv) {
-	size_t length = get_length(fh, offset, length_sv);
 	int utf8 = check_layers(fh);
+	size_t length = get_length(fh, offset, length_sv);
 	mmap_impl(var, length, protection_sv(mode), MAP_SHARED | MAP_FILE, PerlIO_fileno(fh), offset, utf8);
 }
 #define map_handle(var, fh, mode, offset, length) S_map_handle(aTHX_ var, fh, mode, offset, length)

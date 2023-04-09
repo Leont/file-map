@@ -1,6 +1,7 @@
 Revision history for File-Map
 
 {{$NEXT}}
+          - Check layers before statting
           - Split out mmap-compat.c
 
 0.70      2023-04-02 22:27:45+02:00 Europe/Amsterdam
