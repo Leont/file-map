@@ -104,41 +104,41 @@ The following functions for mapping a variable are available for exportation. No
 
 Use a filehandle to map into an lvalue. $filehandle should be a scalar filehandle. $mode uses the same format as C<open> does (it currently accepts C<< < >>, C<< +< >>, C<< > >> and C<< +> >>). $offset and $length are byte positions in the file, and default to mapping the whole file.
 
-=head3 * map_file $lvalue, $filename, $mode = '<', $offset = 0, $length = -s($filename) - $offset
+=head3 map_file $lvalue, $filename, $mode = '<', $offset = 0, $length = -s($filename) - $offset
 
 Open a file and map it into an lvalue. Other than $filename, all arguments work as in map_handle.
 
-=head3 * map_anonymous $lvalue, $length, $type
+=head3 map_anonymous $lvalue, $length, $type
 
 Map an anonymous piece of memory. $type can be either C<'shared'>, in which case it will be shared with child processes, or C<'private'>, which won't be shared.
 
-=head3 * sys_map $lvalue, $length, $protection, $flags, $filehandle, $offset = 0
+=head3 sys_map $lvalue, $length, $protection, $flags, $filehandle, $offset = 0
 
 Low level map operation. It accepts the same constants as mmap does (except its first argument obviously). If you don't know how mmap works you probably shouldn't be using this.
 
-=head3 * unmap $lvalue
+=head3 unmap $lvalue
 
 Unmap a variable. Note that normally this is not necessary as variables are unmapped automatically at destruction, but it is included for completeness.
 
-=head3 * remap $lvalue, $new_size
+=head3 remap $lvalue, $new_size
 
 Try to remap $lvalue to a new size. This call is linux specific and not supported on other systems. For a file backed mapping a file must be long enough to hold the new size, otherwise you can expect bus faults. For an anonymous map it must be private, shared maps can not be remapped. B<Use with caution>.
 
 =head2 Auxiliary  
 
-=head3 * sync $lvalue, $synchronous = 1
+=head3 sync $lvalue, $synchronous = 1
 
 Flush changes made to the memory map back to disk. Mappings are always flushed when unmapped, so this is usually not necessary. If $synchronous is true and your operating system supports it, the flushing will be done synchronously.
 
-=head3 * pin $lvalue
+=head3 pin $lvalue
 
 Disable paging for this map, thus locking it in physical memory. Depending on your operating system there may be limits on pinning.
 
-=head3 * unpin $lvalue
+=head3 unpin $lvalue
 
 Unlock the map from physical memory.
 
-=head3 * advise $lvalue, $advice
+=head3 advise $lvalue, $advice
 
 Advise a certain memory usage pattern. This is not implemented on all operating systems, and may be a no-op. The following values for $advice are always accepted:.
 
@@ -168,7 +168,7 @@ Specifies that the application expects that it will not access the mapped variab
 
 On some systems there may be more values available, but this can not be relied on. Unknown values for $advice will cause a warning but are further ignored.
 
-=head3 * protect $lvalue, $mode
+=head3 protect $lvalue, $mode
 
 Change the memory protection of the mapping. $mode takes the same format as C<open>, but also accepts sys_map style constants.
 
@@ -176,19 +176,19 @@ Change the memory protection of the mapping. $mode takes the same format as C<op
 
 These locking functions provide locking for threads for the mapped region. The mapped region has an internal lock and condition variable. The condition variable functions(C<wait_until>, C<notify>, C<broadcast>) can only be used inside a locked block. If your perl has been compiled without thread support the condition functions will not be available.
 
-=head3 * lock_map $lvalue
+=head3 lock_map $lvalue
 
 Lock $lvalue until the end of the scope. If your perl does not support threads, this will be a no-op.
 
-=head3 * wait_until { block } $lvalue
+=head3 wait_until { block } $lvalue
 
 Wait for block to become true. After every failed attempt, wait for a signal. It returns the value returned by the block.
 
-=head3 * notify $lvalue
+=head3 notify $lvalue
 
 This will signal to one listener that the map is available.
 
-=head3 * broadcast $lvalue
+=head3 broadcast $lvalue
 
 This will signal to all listeners that the map is available.
 
